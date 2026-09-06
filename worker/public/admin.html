@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>光影集 · 作品上传面板</title>
+<style>
+    :root { --primary:#0071e3; --text:#1d1d1f; --sub:#86868b; --bg:#f5f5f7; --line:#e6e6e8; }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:-apple-system,"SF Pro Display","Helvetica Neue",Arial,"PingFang SC","Microsoft YaHei",sans-serif;
+           background:var(--bg); color:var(--text); line-height:1.5; padding:32px 16px; }
+    .wrap { max-width:760px; margin:0 auto; }
+    h1 { font-size:28px; font-weight:600; margin-bottom:4px; }
+    .tip { color:var(--sub); font-size:14px; margin-bottom:24px; }
+    .card { background:#fff; border:1px solid var(--line); border-radius:16px; padding:24px; margin-bottom:20px;
+            box-shadow:0 2px 12px rgba(0,0,0,0.04); }
+    .card h2 { font-size:17px; font-weight:600; margin-bottom:16px; }
+    label { display:block; font-size:13px; color:var(--sub); margin:12px 0 6px; }
+    input[type=text], input[type=password], select, textarea {
+        width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:10px; font-size:15px;
+        font-family:inherit; background:#fff; color:var(--text); outline:none; }
+    input:focus, select:focus, textarea:focus { border-color:var(--primary); }
+    textarea { resize:vertical; min-height:72px; }
+    .row { display:flex; gap:12px; }
+    .row > div { flex:1; }
+    .tabs { display:flex; gap:8px; margin-bottom:16px; }
+    .tab { flex:1; text-align:center; padding:10px; border-radius:999px; border:1px solid var(--line);
+           background:#fff; cursor:pointer; font-size:14px; transition:all .2s; }
+    .tab.active { background:var(--text); color:#fff; border-color:var(--text); }
+    .drop { border:2px dashed #d2d2d7; border-radius:14px; padding:28px; text-align:center; color:var(--sub);
+            cursor:pointer; transition:all .2s; font-size:14px; }
+    .drop:hover, .drop.over { border-color:var(--primary); color:var(--primary); background:rgba(0,113,227,0.04); }
+    .filelist { margin-top:12px; display:flex; flex-wrap:wrap; gap:10px; }
+    .filelist .item { position:relative; width:88px; }
+    .filelist img, .filelist video { width:88px; height:88px; object-fit:cover; border-radius:10px;
+            border:1px solid var(--line); background:#000; }
+    .filelist .name { font-size:11px; color:var(--sub); word-break:break-all; margin-top:4px; }
+    .filelist .rm { position:absolute; top:-6px; right:-6px; width:22px; height:22px; border-radius:50%;
+            background:#ff3b30; color:#fff; border:none; cursor:pointer; font-size:13px; line-height:22px; }
+    button.act { background:var(--primary); color:#fff; border:none; border-radius:999px; padding:12px 28px;
+            font-size:15px; font-weight:500; cursor:pointer; transition:background .2s; }
+    button.act:hover { background:#0077ed; }
+    button.act:disabled { background:#b0b0b5; cursor:not-allowed; }
+    button.ghost { background:#fff; color:var(--text); border:1px solid var(--line); border-radius:999px;
+            padding:8px 18px; font-size:13px; cursor:pointer; }
+    button.ghost:hover { border-color:var(--text); }
+    .status { margin-top:12px; font-size:14px; min-height:22px; }
+    .status.ok { color:#248a3d; } .status.err { color:#ff3b30; }
+    .result { margin-top:16px; }
+    .result pre { background:#1d1d1f; color:#d7f7d7; border-radius:10px; padding:14px; font-size:12px;
+            overflow:auto; max-height:280px; white-space:pre-wrap; word-break:break-all; }
+    .result a { color:#67b7ff; word-break:break-all; }
+    .hint { font-size:12px; color:var(--sub); margin-top:6px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+    <h1>光影集 · 作品上传面板</h1>
+    <p class="tip">拖拽文件 → 浏览器自动压缩生成缩略图/卡片图/灯箱大图 → 上传到 Cloudflare R2 并自动更新作品列表，无需再修改网页代码。</p>
+
+    <!-- 连接设置 -->
+    <div class="card">
+        <h2>1. 连接设置</h2>
+        <label>Worker API 地址</label>
+        <input type="text" id="apiBase" placeholder="https://guangyingji-api.xxx.workers.dev">
+        <label>R2 公开访问域名（用于预览链接，图片实际走 CDN/公开域名）</label>
+        <input type="text" id="mediaBase" placeholder="https://pub-xxxx.r2.dev 或绑定的自定义域名">
+        <div class="row" style="margin-top:12px;">
+            <div>
+                <label>上传令牌（wrangler secret put ADMIN_TOKEN 设置的值）</label>
+                <input type="password" id="token" placeholder="Admin Token">
+            </div>
+        </div>
+        <div style="margin-top:14px; display:flex; gap:10px; align-items:center;">
+            <button class="ghost" id="btnHealth" type="button">测试连接</button>
+            <span class="status" id="healthStatus"></span>
+        </div>
+    </div>
+
+    <!-- 作品类型 -->
+    <div class="card">
+        <h2>2. 作品类型</h2>
+        <div class="tabs">
+            <div class="tab active" data-type="image">单张图片</div>
+            <div class="tab" data-type="group">组图（多张）</div>
+            <div class="tab" data-type="video">视频</div>
+        </div>
+
+        <!-- 文件区 -->
+        <div class="drop" id="drop">
+            点击选择，或把文件拖拽到这里
+            <div class="hint" id="dropHint">单张图片：选择 1 张图片（jpg/png/webp）</div>
+        </div>
+        <input type="file" id="fileInput" multiple hidden>
+        <div class="filelist" id="fileList"></div>
+
+        <!-- 视频封面（仅视频类型显示） -->
+        <div id="coverBox" style="display:none; margin-top:14px;">
+            <label>视频封面（可选；不选则自动截取视频第 1 秒画面）</label>
+            <input type="file" id="coverInput" accept="image/*">
+            <div class="filelist" id="coverList"></div>
+        </div>
+    </div>
+
+    <!-- 作品信息 -->
+    <div class="card">
+        <h2>3. 作品信息</h2>
+        <label>标题 *</label>
+        <input type="text" id="fTitle" placeholder="例如：经幡下的神山">
+        <div class="row">
+            <div>
+                <label>分类</label>
+                <select id="fCategory">
+                    <option value="landscape">风光</option>
+                    <option value="portrait">人像</option>
+                    <option value="art">艺术</option>
+                    <option value="sports">赛事</option>
+                    <option value="conference">会议</option>
+                </select>
+            </div>
+            <div>
+                <label>媒体信息（可选，留空自动生成）</label>
+                <input type="text" id="fMediaInfo" placeholder="例如：摄影作品 / 组图作品 · 4张">
+            </div>
+        </div>
+        <label>作品描述</label>
+        <textarea id="fDesc" placeholder="一句话描述这组作品…"></textarea>
+
+        <div style="margin-top:18px; display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+            <button class="act" id="btnUpload" type="button">压缩并发布</button>
+            <span class="status" id="uploadStatus"></span>
+        </div>
+        <div class="result" id="result"></div>
+    </div>
+</div>
+
+<script>
+    // ==================== 配置 ====================
+    const LS = {
+        get(k){ try { return localStorage.getItem(k) || ''; } catch(e){ return ''; } },
+        set(k,v){ try { localStorage.setItem(k, v); } catch(e){} }
+    };
+    const $ = id => document.getElementById(id);
+    const apiBaseEl = $('apiBase'), mediaBaseEl = $('mediaBase'), tokenEl = $('token');
+    apiBaseEl.value = LS.get('gyj_api_base') || '';
+    mediaBaseEl.value = LS.get('gyj_media_base') || '';
+    tokenEl.value = LS.get('gyj_token') || '';
+    [apiBaseEl, mediaBaseEl, tokenEl].forEach(el => el.addEventListener('change', saveConfig));
+    function saveConfig() {
+        LS.set('gyj_api_base', apiBaseEl.value.trim().replace(/\/$/, ''));
+        LS.set('gyj_media_base', mediaBaseEl.value.trim().replace(/\/$/, ''));
+        LS.set('gyj_token', tokenEl.value.trim());
+    }
+    const API = () => apiBaseEl.value.trim().replace(/\/$/, '');
+    const MEDIA = () => mediaBaseEl.value.trim().replace(/\/$/, '');
+
+    // ==================== 压缩档位（与网站一致）====================
+    const TIERS = [
+        { role: 'thumb',  longEdge: 600,  quality: 0.80 },
+        { role: 'card',   longEdge: 1600, quality: 0.82 },
+        { role: 'large',  longEdge: 2560, quality: 0.85 },
+    ];
+
+    // ==================== 类型切换 ====================
+    let workType = 'image';
+    let files = [];       // 图片或视频文件
+    let coverFile = null; // 视频封面
+    document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            workType = tab.dataset.type;
+            files = []; coverFile = null; renderFiles(); renderCover();
+            $('coverBox').style.display = workType === 'video' ? 'block' : 'none';
+            const hint = {
+                image: '单张图片：选择 1 张图片（jpg/png/webp）',
+                group: '组图：可多选，按选择顺序排列',
+                video: '视频：选择 1 个视频文件（mp4，Worker 免费版单次请求上限 100MB）'
+            };
+            $('dropHint').textContent = hint[workType];
+        });
+    });
+
+    // ==================== 文件选择 / 拖拽 ====================
+    const drop = $('drop'), fileInput = $('fileInput');
+    drop.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', () => { addFiles(fileInput.files); fileInput.value = ''; });
+    ['dragover', 'dragenter'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
+    ['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('over'); }));
+    drop.addEventListener('drop', e => addFiles(e.dataTransfer.files));
+
+    function addFiles(fileList) {
+        const arr = Array.from(fileList);
+        if (workType === 'video') {
+            const v = arr.find(f => f.type.startsWith('video/') || /\.mp4|mov|webm$/i.test(f.name));
+            if (v) files = [v]; else files = arr.slice(0, 1);
+        } else if (workType === 'image') {
+            files = arr.filter(f => f.type.startsWith('image/')).slice(0, 1);
+        } else {
+            files = files.concat(arr.filter(f => f.type.startsWith('image/')));
+        }
+        renderFiles();
+    }
+
+    function renderFiles() {
+        const box = $('fileList');
+        box.innerHTML = '';
+        files.forEach((f, i) => {
+            const div = document.createElement('div');
+            div.className = 'item';
+            const url = URL.createObjectURL(f);
+            if (f.type.startsWith('video/')) {
+                div.innerHTML = `<video src="${url}" muted></video><button class="rm" title="移除">×</button><div class="name">${f.name}</div>`;
+            } else {
+                div.innerHTML = `<img src="${url}" alt=""><button class="rm" title="移除">×</button><div class="name">${f.name}</div>`;
+            }
+            div.querySelector('.rm').addEventListener('click', () => { files.splice(i, 1); renderFiles(); });
+            box.appendChild(div);
+        });
+    }
+
+    $('coverInput').addEventListener('change', e => {
+        coverFile = e.target.files[0] || null;
+        renderCover();
+        e.target.value = '';
+    });
+    function renderCover() {
+        const box = $('coverList');
+        box.innerHTML = '';
+        if (coverFile) {
+            const div = document.createElement('div');
+            div.className = 'item';
+            div.innerHTML = `<img src="${URL.createObjectURL(coverFile)}" alt=""><button class="rm" title="移除">×</button><div class="name">${coverFile.name}</div>`;
+            div.querySelector('.rm').addEventListener('click', () => { coverFile = null; renderCover(); });
+            box.appendChild(div);
+        }
+    }
+
+    // ==================== 图片压缩（浏览器 Canvas 预生成三级 WebP）====================
+    function loadImage(blob) {
+        return new Promise((resolve, reject) => {
+            const url = URL.createObjectURL(blob);
+            const img = new Image();
+            img.onload = () => resolve({ img, url });
+            img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('图片读取失败')); };
+            img.src = url;
+        });
+    }
+
+    async function resizeToBlob(blob, longEdge, quality) {
+        const { img, url } = await loadImage(blob);
+        try {
+            // 等比缩放：长边不超过 longEdge；小图不放大（与 OSS m_lfit/limit_1 行为一致）
+            const scale = Math.min(1, longEdge / Math.max(img.naturalWidth, img.naturalHeight));
+            const w = Math.max(1, Math.round(img.naturalWidth * scale));
+            const h = Math.max(1, Math.round(img.naturalHeight * scale));
+            const canvas = document.createElement('canvas');
+            canvas.width = w; canvas.height = h;
+            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+            return await new Promise(res => canvas.toBlob(b => res(b), 'image/webp', quality));
+        } finally {
+            URL.revokeObjectURL(url);
+        }
+    }
+
+    // 从视频中截取一帧作为封面（本地 blob URL 不污染 canvas，可导出）
+    function captureVideoFrame(videoFile) {
+        return new Promise((resolve, reject) => {
+            const url = URL.createObjectURL(videoFile);
+            const video = document.createElement('video');
+            video.muted = true; video.playsInline = true; video.preload = 'auto';
+            video.src = url;
+            const cleanup = () => URL.revokeObjectURL(url);
+            video.addEventListener('loadeddata', () => { video.currentTime = Math.min(1, (video.duration || 2) / 2); });
+            video.addEventListener('seeked', () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+                canvas.getContext('2d').drawImage(video, 0, 0);
+                canvas.toBlob(b => { cleanup(); b ? resolve(b) : reject(new Error('封面截帧失败')); }, 'image/jpeg', 0.95);
+            }, { once: true });
+            video.addEventListener('error', () => { cleanup(); reject(new Error('视频读取失败')); });
+        });
+    }
+
+    async function buildImageTiers(form, itemIdx, sourceBlob, ext) {
+        form.append(`${itemIdx}_original`, sourceBlob, `original.${ext}`);
+        for (const t of TIERS) {
+            const blob = await resizeToBlob(sourceBlob, t.longEdge, t.quality);
+            form.append(`${itemIdx}_${t.role}`, blob, `${t.role}.webp`);
+        }
+    }
+
+    // ==================== 测试连接 ====================
+    $('btnHealth').addEventListener('click', async () => {
+        saveConfig();
+        const st = $('healthStatus');
+        st.className = 'status'; st.textContent = '检测中…';
+        try {
+            const r = await fetch(`${API()}/api/health`);
+            const d = await r.json();
+            if (d.ok) { st.className = 'status ok'; st.textContent = '✓ Worker 连接正常'; }
+            else { st.className = 'status err'; st.textContent = '返回异常：' + JSON.stringify(d); }
+        } catch (e) {
+            st.className = 'status err'; st.textContent = '连接失败：' + e.message;
+        }
+    });
+
+    // ==================== 发布 ====================
+    $('btnUpload').addEventListener('click', async () => {
+        saveConfig();
+        const st = $('uploadStatus'), resultBox = $('result');
+        resultBox.innerHTML = '';
+        const title = $('fTitle').value.trim();
+        if (!API() || !MEDIA() || !tokenEl.value.trim()) { st.className = 'status err'; st.textContent = '请先填写 API 地址、R2 域名和令牌并测试连接'; return; }
+        if (!files.length) { st.className = 'status err'; st.textContent = '请先选择文件'; return; }
+        if (!title) { st.className = 'status err'; st.textContent = '请填写标题'; return; }
+
+        const btn = $('btnUpload');
+        btn.disabled = true;
+        const setStatus = (msg, cls) => { st.className = 'status ' + (cls || ''); st.textContent = msg; };
+
+        try {
+            const form = new FormData();
+            let items = [];
+            setStatus('正在浏览器端压缩生成三级图片…');
+
+            if (workType === 'video') {
+                items = [{ kind: 'video' }];
+                form.append('0_video', files[0], files[0].name.replace(/[^\w.\-]+/g, '_') || 'video.mp4');
+                const cover = coverFile || await captureVideoFrame(files[0]);
+                await buildImageTiers(form, 0, cover, coverFile ? (coverFile.name.split('.').pop() || 'jpg') : 'jpg');
+            } else if (workType === 'group') {
+                for (let i = 0; i < files.length; i++) {
+                    setStatus(`正在压缩第 ${i + 1} / ${files.length} 张…`);
+                    const ext = (files[i].name.split('.').pop() || 'jpg').toLowerCase();
+                    await buildImageTiers(form, i, files[i], ext);
+                    items.push({ kind: 'image' });
+                }
+            } else {
+                items = [{ kind: 'image' }];
+                const ext = (files[0].name.split('.').pop() || 'jpg').toLowerCase();
+                await buildImageTiers(form, 0, files[0], ext);
+            }
+
+            const meta = {
+                type: workType,
+                title,
+                category: $('fCategory').value,
+                mediaInfo: $('fMediaInfo').value.trim(),
+                description: $('fDesc').value.trim(),
+                items
+            };
+            form.append('meta', JSON.stringify(meta));
+
+            setStatus('正在上传到 R2 并更新作品列表…');
+            const r = await fetch(`${API()}/api/upload`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${tokenEl.value.trim()}` },
+                body: form
+            });
+            const d = await r.json();
+            if (!r.ok || !d.ok) throw new Error(d.error || ('HTTP ' + r.status));
+
+            st.className = 'status ok';
+            st.textContent = `✓ 发布成功！作品 ID：${d.work.id}，约 30 秒后出现在网站（works.json 缓存过期）。`;
+            const publicUrl = key => `${MEDIA()}/${String(key).replace(/^\//, '').split('/').map(encodeURIComponent).join('/')}`;
+            resultBox.innerHTML = `
+                <h2 style="font-size:15px; margin:16px 0 8px;">已写入 works.json 的作品片段</h2>
+                <pre>${JSON.stringify(d.work, null, 2)}</pre>
+                <p class="hint">公开访问示例：<a href="${publicUrl(d.work.large || (d.work.fullImages && d.work.fullImages[0]) || d.work.thumb)}" target="_blank">
+                ${publicUrl(d.work.large || (d.work.fullImages && d.work.fullImages[0]) || d.work.thumb)}</a></p>`;
+
+            // 清空表单（保留连接设置）
+            files = []; coverFile = null; renderFiles(); renderCover();
+            $('fTitle').value = ''; $('fMediaInfo').value = ''; $('fDesc').value = '';
+        } catch (e) {
+            st.className = 'status err';
+            st.textContent = '发布失败：' + e.message;
+        } finally {
+            btn.disabled = false;
+        }
+    });
+</script>
+</body>
+</html>

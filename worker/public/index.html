@@ -1,0 +1,1247 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>光影集 | 个人摄影作品展示</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        apple: {
+                            primary: '#0071e3',
+                            text: '#1d1d1f',
+                            textSecondary: '#86868b',
+                            background: '#f5f5f7',
+                            surface: '#ffffff',
+                            border: 'rgba(0,0,0,0.06)',
+                            silver: '#a2aaad'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'SF Pro Display', 'SF Pro Icons', 'Helvetica Neue', 'Helvetica', 'Arial', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .scroll-container {
+                overflow: hidden;
+            }
+            .scroll-wrapper {
+                display: flex;
+                width: max-content;
+            }
+            .group-tilted-1 {
+                transform: rotate(-4deg);
+                z-index: 3;
+            }
+            .group-tilted-2 {
+                transform: rotate(2deg);
+                z-index: 2;
+            }
+            .group-tilted-3 {
+                transform: rotate(-3deg);
+                z-index: 1;
+            }
+            .group:hover .group-tilted-1 {
+                transform: rotate(-4deg) scale(1.03);
+            }
+            .group:hover .group-tilted-2 {
+                transform: rotate(2deg) scale(1.03);
+            }
+            .group:hover .group-tilted-3 {
+                transform: rotate(-3deg) scale(1.03);
+            }
+        }
+    </style>
+    
+    <style>
+        :root {
+            --color-primary: #0071e3;
+            --color-text: #1d1d1f;
+            --color-text-secondary: #86868b;
+            --color-background: #f5f5f7;
+            --color-surface: #ffffff;
+            --color-border: #e6e6e8;
+            
+            --font-size-h1: 48px;
+            --font-size-h2: 32px;
+            --font-size-h3: 24px;
+            --font-size-body: 17px;
+            --font-size-small: 14px;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: var(--font-sans);
+            /* 调整后的渐变，更明显可见，层次更清晰 */
+            background: linear-gradient(180deg, #f8fbff 0%, #f0f4f9 40%, #e8edf5 100%);
+            color: var(--color-text);
+            line-height: 1.47;
+            letter-spacing: -0.022em;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        /* ============ 苹果官网风格极简渐变背景动效（aurora 光晕） ============ */
+        /* 纯径向渐变 + transform 动画（合成器渲染，不用 blur 滤镜），大而柔和、缓慢呼吸 */
+        .bg-aurora {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .aurora-blob {
+            position: absolute;
+            border-radius: 50%;
+            will-change: transform;
+        }
+
+        /* 主色：苹果蓝 */
+        .aurora-1 {
+            width: 75vmax;
+            height: 75vmax;
+            top: -28vmax;
+            left: -18vmax;
+            background: radial-gradient(circle at 50% 50%, rgba(0, 113, 227, 0.14) 0%, rgba(0, 113, 227, 0.05) 38%, transparent 68%);
+            animation: auroraDrift1 34s ease-in-out infinite alternate;
+        }
+
+        /* 辅色：晨雾银 */
+        .aurora-2 {
+            width: 62vmax;
+            height: 62vmax;
+            top: 18%;
+            right: -24vmax;
+            background: radial-gradient(circle at 50% 50%, rgba(162, 170, 173, 0.18) 0%, rgba(162, 170, 173, 0.06) 40%, transparent 70%);
+            animation: auroraDrift2 42s ease-in-out infinite alternate;
+        }
+
+        /* 点缀：极光青 */
+        .aurora-3 {
+            width: 50vmax;
+            height: 50vmax;
+            bottom: -20vmax;
+            left: 16%;
+            background: radial-gradient(circle at 50% 50%, rgba(100, 210, 255, 0.11) 0%, rgba(100, 210, 255, 0.04) 40%, transparent 70%);
+            animation: auroraDrift3 38s ease-in-out infinite alternate;
+        }
+
+        /* 点缀：暮光紫 */
+        .aurora-4 {
+            width: 38vmax;
+            height: 38vmax;
+            top: 34%;
+            left: 32%;
+            background: radial-gradient(circle at 50% 50%, rgba(191, 90, 242, 0.07) 0%, rgba(191, 90, 242, 0.03) 42%, transparent 72%);
+            animation: auroraDrift4 46s ease-in-out infinite alternate;
+        }
+
+        @keyframes auroraDrift1 {
+            0%   { transform: translate3d(0, 0, 0) scale(1); }
+            50%  { transform: translate3d(9vw, 6vh, 0) scale(1.12); }
+            100% { transform: translate3d(-4vw, 12vh, 0) scale(0.95); }
+        }
+
+        @keyframes auroraDrift2 {
+            0%   { transform: translate3d(0, 0, 0) scale(1); }
+            50%  { transform: translate3d(-7vw, -9vh, 0) scale(1.08); }
+            100% { transform: translate3d(3vw, 7vh, 0) scale(1.15); }
+        }
+
+        @keyframes auroraDrift3 {
+            0%   { transform: translate3d(0, 0, 0) scale(1); }
+            50%  { transform: translate3d(6vw, -6vh, 0) scale(1.1); }
+            100% { transform: translate3d(-6vw, -3vh, 0) scale(0.92); }
+        }
+
+        @keyframes auroraDrift4 {
+            0%   { transform: translate3d(0, 0, 0) scale(1); }
+            50%  { transform: translate3d(-8vw, 5vh, 0) scale(1.18); }
+            100% { transform: translate3d(5vw, -7vh, 0) scale(1.02); }
+        }
+
+        /* 点缀：青绿 */
+        .aurora-5 {
+            width: 44vmax;
+            height: 44vmax;
+            top: 58%;
+            right: 6%;
+            background: radial-gradient(circle at 50% 50%, rgba(52, 199, 159, 0.08) 0%, rgba(52, 199, 159, 0.03) 42%, transparent 72%);
+            animation: auroraDrift5 52s ease-in-out infinite alternate;
+        }
+
+        /* 点缀：樱粉 */
+        .aurora-6 {
+            width: 30vmax;
+            height: 30vmax;
+            bottom: 4%;
+            right: 28%;
+            background: radial-gradient(circle at 50% 50%, rgba(255, 120, 150, 0.06) 0%, rgba(255, 120, 150, 0.02) 44%, transparent 74%);
+            animation: auroraDrift6 40s ease-in-out infinite alternate;
+        }
+
+        /* 点缀：深海蓝 */
+        .aurora-7 {
+            width: 36vmax;
+            height: 36vmax;
+            top: 6%;
+            left: 44%;
+            background: radial-gradient(circle at 50% 50%, rgba(10, 90, 200, 0.10) 0%, rgba(10, 90, 200, 0.04) 40%, transparent 70%);
+            animation: auroraDrift7 58s ease-in-out infinite alternate;
+        }
+
+        @keyframes auroraDrift5 {
+            0%   { transform: translate3d(0, 0, 0) scale(1); }
+            50%  { transform: translate3d(-6vw, -7vh, 0) scale(1.12); }
+            100% { transform: translate3d(4vw, 5vh, 0) scale(0.94); }
+        }
+
+        @keyframes auroraDrift6 {
+            0%   { transform: translate3d(0, 0, 0) scale(1); }
+            50%  { transform: translate3d(7vw, -4vh, 0) scale(1.2); }
+            100% { transform: translate3d(-5vw, 6vh, 0) scale(1.0); }
+        }
+
+        @keyframes auroraDrift7 {
+            0%   { transform: translate3d(0, 0, 0) scale(1); }
+            50%  { transform: translate3d(-5vw, 8vh, 0) scale(1.1); }
+            100% { transform: translate3d(6vw, -5vh, 0) scale(0.96); }
+        }
+
+        /* ============ 卡片边框动效：多层渐变 + 随鼠标点亮 ============ */
+        @property --ring-angle {
+            syntax: '<angle>';
+            inherits: false;
+            initial-value: 0deg;
+        }
+
+        .glow-card {
+            position: relative;
+        }
+
+        .glow-card::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            padding: 1.5px;
+            /* 两层叠加：光标邻近径向光斑 + 缓慢旋转的多彩 conic 渐变环 */
+            background:
+                radial-gradient(220px circle at var(--gx, 50%) var(--gy, 50%),
+                    rgba(0, 113, 227, 0.95),
+                    rgba(100, 210, 255, 0.45) 40%,
+                    transparent 70%),
+                conic-gradient(from var(--ring-angle) at 50% 50%,
+                    rgba(0, 113, 227, 0.55),
+                    rgba(100, 210, 255, 0.45) 18%,
+                    rgba(191, 90, 242, 0.45) 38%,
+                    rgba(162, 170, 173, 0.40) 55%,
+                    rgba(52, 199, 159, 0.35) 72%,
+                    rgba(0, 113, 227, 0.55) 100%);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask: linear-gradient(#fff 0 0) content-box exclude, linear-gradient(#fff 0 0);
+            opacity: 0;
+            transition: opacity 0.35s ease;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .glow-card.glow-active::after {
+            opacity: 1;
+            animation: ringSpin 10s linear infinite;
+        }
+
+        @keyframes ringSpin {
+            to { --ring-angle: 360deg; }
+        }
+
+        /* ============ 液态高斯玻璃质感 ============ */
+        .liquid-glass {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.60), rgba(255, 255, 255, 0.34));
+            -webkit-backdrop-filter: blur(28px) saturate(180%);
+            backdrop-filter: blur(28px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.70);
+            box-shadow: 0 8px 32px rgba(31, 66, 135, 0.10),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.90),
+                        inset 0 -1px 1px rgba(255, 255, 255, 0.35);
+        }
+
+        /* 全宽条带版本（页头 / 区块 / 页脚）：无圆角与侧边框 */
+        .liquid-glass-bar {
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.40));
+            -webkit-backdrop-filter: blur(28px) saturate(180%);
+            backdrop-filter: blur(28px) saturate(180%);
+        }
+
+        /* ============ 背景整体纹理流动（替代漂浮小元素） ============ */
+        .bg-texture {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        /* 丝绸光带：斜向重复渐变，大尺寸层缓慢往复平移，产生整体流动感 */
+        .texture-silk {
+            position: absolute;
+            top: -60vmax;
+            left: -60vmax;
+            width: 220vmax;
+            height: 220vmax;
+            background: repeating-linear-gradient(115deg,
+                transparent 0px, transparent 90px,
+                rgba(255, 255, 255, 0.5) 140px, rgba(255, 255, 255, 0.5) 150px,
+                rgba(0, 113, 227, 0.05) 200px, transparent 260px,
+                rgba(100, 210, 255, 0.04) 320px, transparent 380px);
+            opacity: 0.55;
+            will-change: transform;
+            animation: silkFlow 26s ease-in-out infinite alternate;
+        }
+
+        /* 柔焦波纹：低频双色网点，反向缓慢漂移呼吸 */
+        .texture-mesh {
+            position: absolute;
+            top: -50vmax;
+            left: -50vmax;
+            width: 200vmax;
+            height: 200vmax;
+            background:
+                radial-gradient(rgba(0, 113, 227, 0.05) 1.2px, transparent 1.6px),
+                radial-gradient(rgba(162, 170, 173, 0.05) 1px, transparent 1.4px);
+            background-size: 46px 46px, 66px 66px;
+            background-position: 0 0, 23px 33px;
+            opacity: 0.5;
+            will-change: transform;
+            animation: meshFlow 40s ease-in-out infinite alternate;
+        }
+
+        /* 静态胶片颗粒（SVG 噪声），细腻质感 */
+        .texture-grain {
+            position: absolute;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+            opacity: 0.05;
+            mix-blend-mode: multiply;
+        }
+
+        @keyframes silkFlow {
+            0%   { transform: translate3d(0, 0, 0) rotate(0.001deg); }
+            100% { transform: translate3d(-7vmax, 5vmax, 0) rotate(0.001deg); }
+        }
+
+        @keyframes meshFlow {
+            0%   { transform: translate3d(0, 0, 0) scale(1); }
+            100% { transform: translate3d(4vmax, -5vmax, 0) scale(1.06); }
+        }
+
+        /* 偏好减少动效时停用所有背景动画（卡片边框发光跟随鼠标保留） */
+        @media (prefers-reduced-motion: reduce) {
+            .aurora-blob,
+            .texture-silk,
+            .texture-mesh { animation: none; }
+            .scroll-wrapper { animation-play-state: paused; }
+        }
+        
+        .scroll-item {
+            flex-shrink: 0;
+            cursor: pointer;
+        }
+        
+        .scroll-item img {
+            height: 120px;
+            width: auto;
+            max-width: 220px; /* 限制最大宽度，避免过宽图片 */
+            object-fit: contain; /* 确保完全等比，不裁剪不拉伸 */
+            transition: all 0.4s cubic-bezier(0.25, 0.1, 0.25, 1);
+            border-radius: 8px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            display: block;
+        }
+        
+        .scroll-item:hover img {
+            height: 150px; /* 放大25%，更大的放大倍率 */
+            max-width: 275px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+        }
+        
+        @keyframes scroll {
+            0% {
+                transform: translateX(0);
+            }
+            100% {
+                transform: translateX(-50%);
+            }
+        }
+        
+        .scroll-wrapper {
+            animation: scroll 25s linear infinite;
+        }
+        
+        .scroll-container:hover .scroll-wrapper {
+            animation-play-state: paused;
+        }
+        
+        .work-card {
+            transition: all 0.4s cubic-bezier(0.25, 0.1, 0.25, 1);
+        }
+        
+        .work-card:hover {
+            transform: translateY(-4px);
+        }
+        
+        .modal {
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        
+        .modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .modal-content {
+            transform: scale(0.95);
+            opacity: 0;
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+                        opacity 0.3s ease;
+            will-change: transform, opacity;
+        }
+        
+        .modal.active .modal-content {
+            transform: scale(1);
+            opacity: 1;
+        }
+
+        /* 弹窗专用玻璃：降低 blur 半径（大面积实时模糊是卡顿主因），保留质感 */
+        #modalCard.liquid-glass {
+            -webkit-backdrop-filter: blur(14px) saturate(160%);
+            backdrop-filter: blur(14px) saturate(160%);
+        }
+
+        /* 组图/视频弹窗滚动条：毛玻璃磨砂风，与玻璃卡质感统一 */
+        #modalCard::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        /* 去掉轨道背景（即用户说的"半透明提示进度方框"），只保留滑块 */
+        #modalCard::-webkit-scrollbar-track {
+            background: transparent;
+            border-radius: 999px;
+            margin: 6px 0;
+        }
+
+        #modalCard::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg,
+                rgba(255, 255, 255, 0.55),
+                rgba(255, 255, 255, 0.35));
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 2px 8px rgba(31, 66, 135, 0.12);
+            transition: background 0.25s ease, box-shadow 0.25s ease;
+        }
+
+        #modalCard::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(180deg,
+                rgba(255, 255, 255, 0.80),
+                rgba(255, 255, 255, 0.55));
+            box-shadow: 0 0 0 2px rgba(120, 195, 255, 0.25),
+                        0 2px 10px rgba(31, 66, 135, 0.18);
+        }
+
+        #modalCard::-webkit-scrollbar-thumb:active {
+            background: linear-gradient(180deg,
+                rgba(255, 255, 255, 0.50),
+                rgba(255, 255, 255, 0.30));
+        }
+
+        /* Firefox 渐进增强 */
+        #modalCard {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255, 255, 255, 0.45) rgba(255, 255, 255, 0.12);
+        }
+
+        /* 单图灯箱模式：去掉玻璃卡，图片直接呈现在毛玻璃暗背景上（苹果照片风格） */
+        .modal-card-single {
+            background: none !important;
+            -webkit-backdrop-filter: none !important;
+            backdrop-filter: none !important;
+            border-color: transparent !important;
+            box-shadow: none !important;
+            overflow: visible !important;
+        }
+
+        .modal-card-single #modalHeader {
+            border-color: rgba(255, 255, 255, 0.14);
+        }
+
+        .modal-card-single #modalTitle,
+        .modal-card-single #closeModal {
+            color: rgba(255, 255, 255, 0.92);
+        }
+
+        .modal-card-single #closeModal:hover {
+            background: rgba(255, 255, 255, 0.14);
+        }
+        
+        .category-btn {
+            transition: all 0.3s ease;
+        }
+
+        /* 未选中分类按钮：液态玻璃质感（选中态保持深色实底） */
+        .category-btn:not(.active) {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.45));
+            -webkit-backdrop-filter: blur(18px) saturate(160%);
+            backdrop-filter: blur(18px) saturate(160%);
+        }
+
+        .category-btn.active {
+            background-color: var(--color-text);
+            color: white;
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.6s ease forwards;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .group-tilted-images img {
+            transition: all 0.4s cubic-bezier(0.25, 0.1, 0.25, 1);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            /* 尺寸由 refitGroupPreviews() 按原图比例计算，保证与卡片框大小匹配 */
+        }
+        
+        .series-badge {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: rgba(0,0,0,0.6);
+            color: white;
+            font-size: 12px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            z-index: 10;
+        }
+        
+        .nav-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.55);
+            -webkit-backdrop-filter: blur(12px) saturate(150%);
+            backdrop-filter: blur(12px) saturate(150%);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+            transition: all 0.2s ease;
+            z-index: 20;
+        }
+        
+        .nav-arrow:hover {
+            background: rgba(255, 255, 255, 0.78);
+        }
+        
+        .nav-arrow.left {
+            left: 20px;
+        }
+        
+        .nav-arrow.right {
+            right: 20px;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <!-- 苹果官网风格极简渐变背景动效（aurora 光晕） -->
+    <div class="bg-aurora" aria-hidden="true">
+        <div class="aurora-blob aurora-1"></div>
+        <div class="aurora-blob aurora-2"></div>
+        <div class="aurora-blob aurora-3"></div>
+        <div class="aurora-blob aurora-4"></div>
+        <div class="aurora-blob aurora-5"></div>
+        <div class="aurora-blob aurora-6"></div>
+        <div class="aurora-blob aurora-7"></div>
+    </div>
+
+    <!-- 背景整体纹理流动（丝绸光带 / 柔焦波纹 / 胶片颗粒） -->
+    <div class="bg-texture" aria-hidden="true">
+        <div class="texture-silk"></div>
+        <div class="texture-mesh"></div>
+        <div class="texture-grain"></div>
+    </div>
+
+    <!-- Header -->
+    <header class="sticky top-0 z-40 liquid-glass-bar border-b border-white/60">
+        <div class="max-w-5xl mx-auto px-6 py-4 flex justify-between items-center">
+            <h1 class="text-xl font-semibold text-apple-text">光影集</h1>
+            <nav class="hidden md:flex gap-8">
+                <a href="#works" class="text-apple-textSecondary hover:text-apple-text transition-colors text-sm">作品</a>
+                <a href="#about" class="text-apple-textSecondary hover:text-apple-text transition-colors text-sm">关于</a>
+                <a href="#contact" class="text-apple-textSecondary hover:text-apple-text transition-colors text-sm">联系</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section 大标题-->
+    <section class="max-w-5xl mx-auto px-6 py-16 md:py-20 text-center">
+        <h2 class="text-[clamp(36px,5vw,56px)] font-semibold text-apple-text leading-tight mb-6">
+            用镜头记录<br/>世界的美好
+        </h2>
+        <p class="text-[clamp(18px,2vw,21px)] text-apple-textSecondary max-w-2xl mx-auto">
+            专注于摄影与视频创作，用光影讲述故事。<br/>
+            精选作品，极简呈现。
+        </p>
+    </section>
+
+    <!-- 横向循环滚动照片栏 - 修复无缝循环与比例 -->
+    <section class="py-6 mb-8">
+        <div class="scroll-container">
+            <div class="scroll-wrapper flex gap-4" id="scrollWrapper">
+                <!-- 滚动栏图片由 renderScrollBar() 渲染：缩略图档（长边 600px），点击放大走灯箱大图档 -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Filter Categories -->
+    <section id="works" class="max-w-5xl mx-auto px-6 pb-8">
+        <div class="flex flex-wrap justify-center gap-3" id="categoryFilters">
+            <!-- Categories will be rendered by JS -->
+        </div>
+    </section>
+
+    <!-- Works Grid -->
+    <section class="max-w-5xl mx-auto px-6 pb-20">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8" id="worksGrid">
+            <!-- Works will be rendered by JS -->
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="liquid-glass-bar py-20">
+        <div class="max-w-5xl mx-auto px-6">
+            <div class="grid md:grid-cols-2 gap-12 items-center">
+                <div>
+                    <h3 class="text-3xl font-semibold mb-6">关于我</h3>
+                    <p class="text-apple-textSecondary mb-4">
+                        一名热爱生活的摄影师与视频创作者，拥有5年的专业创作经验。
+                    </p>
+                    <p class="text-apple-textSecondary mb-4">
+                        擅长风光、人像与商业摄影，同时专注于短视频剪辑与后期制作。
+                        相信每一张照片、每一段视频，都承载着独特的故事与情感。
+                    </p>
+                    <p class="text-apple-textSecondary">
+                        致力于用最简洁的方式，呈现最动人的视觉作品。
+                    </p>
+                </div>
+                <div class="rounded-2xl overflow-hidden shadow-lg">
+                    <img id="aboutProfileImg" data-src="https://selflove.oss-cn-chengdu.aliyuncs.com/%E5%85%89%E5%BD%B1%E9%9B%86/images/profile/%E5%BE%AE%E4%BF%A1%E5%9B%BE%E7%89%87_20240919124544.jpg" alt="摄影师肖像" class="w-full h-auto" loading="lazy" decoding="async">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="max-w-5xl mx-auto px-6 py-20 text-center">
+        <h3 class="text-3xl font-semibold mb-6">联系我</h3>
+        <p class="text-apple-textSecondary mb-8 max-w-xl mx-auto">
+            如果您对我的作品感兴趣，或者有合作需求，欢迎随时与我联系。
+        </p>
+        <div class="flex flex-wrap justify-center gap-4">
+            <a href="mailto:Cyan.WangHao@gmail.com" class="inline-flex items-center gap-2 px-6 py-3 bg-apple-primary text-white rounded-full hover:bg-[#0077ED] transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                发送邮件
+            </a>
+            <a href="https://www.xiaohongshu.com/user/profile/6842341b000000001b02095d" target="_blank" class="inline-flex items-center gap-2 px-6 py-3 bg-[#FE2C55] text-white rounded-full hover:bg-[#E8244B] transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+                </svg>
+                小红书
+            </a>
+            <a href="https://douyin.com" target="_blank" class="inline-flex items-center gap-2 px-6 py-3 bg-black text-white rounded-full hover:bg-gray-800 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-5.2 1.74 2.89 2.89 0 012.31-4.64 2.93 2.93 0 01.88.13V9.4a6.84 6.84 0 00-1-.05A6.33 6.33 0 005 20.1a6.34 6.34 0 0010.86-4.43v-7a8.16 8.16 0 004.77 1.52v-3.4a4.85 4.85 0 01-1-.1z"/>
+                </svg>
+                抖音
+            </a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="liquid-glass-bar border-t border-white/60 py-8">
+        <div class="max-w-5xl mx-auto px-6 text-center text-apple-textSecondary text-sm">
+            <p>© 2026 光影集. 保留所有权利.</p>
+        </div>
+    </footer>
+
+    <!-- Preview Modal -->
+    <div class="modal fixed inset-0 z-50 bg-black/50 backdrop-blur-md flex items-center justify-center p-4 md:p-8" id="previewModal">
+        <!-- 左右切换箭头 -->
+        <button class="nav-arrow left" id="prevBtn">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+        </button>
+        <button class="nav-arrow right" id="nextBtn">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+        </button>
+
+        <div class="modal-content liquid-glass w-full max-w-[min(64rem,92vw)] max-h-[92vh] overflow-y-auto overscroll-contain rounded-2xl" id="modalCard">
+            <div class="p-6 border-b border-apple-border flex justify-between items-center" id="modalHeader">
+                <h4 class="text-xl font-semibold" id="modalTitle"></h4>
+                <button id="closeModal" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-apple-background transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div class="p-6" id="modalContent">
+                <!-- Modal content will be rendered by JS -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== Cloudflare R2 + Worker 部署配置 ====================
+        // API_BASE：Cloudflare Worker 地址（作品列表 /api/works，上传 /api/upload）
+        // MEDIA_BASE：R2 公开访问域名（r2.dev 临时域名或绑定的自定义域名），图片/视频实际访问地址
+        //   部署文档见 worker/wrangler.toml 顶部注释；上传面板在 admin.html
+        const API_BASE = 'https://selfloveart.top';
+        const MEDIA_BASE = 'https://media.selfloveart.top';
+
+        // R2 中的媒体 key（如 media/images/20260906-abc123/item0/thumb.webp）拼成公开 URL；
+        // 已是绝对 http(s) 地址的（如旧 OSS 迁移数据）原样返回
+        function mediaUrl(key) {
+            if (!key) return '';
+            if (/^https?:\/\//i.test(key)) return key;
+            // 逐段编码，兼容含中文/空格的 R2 key（如 selfloveart/series/蓝与绿/pic 1.jpg）
+            const path = String(key).replace(/^\//, '').split('/').map(encodeURIComponent).join('/');
+            return MEDIA_BASE.replace(/\/$/, '') + '/' + path;
+        }
+
+        // ==================== 可维护的内容库 ====================
+        // 作品分类 - 可随时扩展新分类
+        const categories = [
+            { id: 'all', name: '全部' },
+            { id: 'landscape', name: '风光' },
+            { id: 'portrait', name: '人像' },
+            { id: 'art', name: '艺术' },
+            { id: 'sports', name: '赛事' },
+            { id: 'conference', name: '会议' },
+            { id: 'video', name: '视频' }
+        ];
+        
+        // 作品数据 - 可随时添加/修改作品
+        // 作品数据：从 Worker 的 /api/works 动态加载（上传面板发布后自动更新，无需改本文件）
+        let works = [];;
+
+        // 当前选中的分类
+        let currentCategory = 'all';
+        // 当前预览的作品索引
+        let currentPreviewIndex = 0;
+        // 当前筛选后的作品列表
+        let currentFilteredWorks = [];
+
+        // ==================== 渲染函数 ====================
+        // 渲染分类筛选按钮
+        function renderCategories() {
+            const container = document.getElementById('categoryFilters');
+            container.innerHTML = categories.map(cat => `
+                <button
+                    class="category-btn glow-card px-4 py-2 rounded-full text-sm font-medium border border-apple-border ${cat.id === currentCategory ? 'active' : 'hover:border-apple-text'}"
+                    data-category="${cat.id}"
+                >
+                    ${cat.name}
+                </button>
+            `).join('');
+
+            // 绑定点击事件
+            container.querySelectorAll('.category-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    currentCategory = btn.dataset.category;
+                    renderCategories();
+                    renderWorks();
+                });
+            });
+        }
+
+        // 渲染顶部横向循环滚动栏：取前 10 张单图作品，复制两组实现无缝循环
+        // 展示尺寸仅 120~150px 高，使用 thumb 缩略图档；data-large/data-original 供灯箱使用
+        function renderScrollBar() {
+            const wrapper = document.getElementById('scrollWrapper');
+            if (!wrapper) return;
+            const items = works.filter(w => w.type === 'image' && !w.isGroup).slice(0, 10);
+            const itemHtml = (w) => `
+                <div class="scroll-item" data-large="${mediaUrl(w.large || w.card)}" data-original="${mediaUrl(w.original || w.large || w.card)}" data-title="${w.title}">
+                    <img src="${mediaUrl(w.thumb)}" alt="${w.title}" loading="lazy" decoding="async">
+                </div>`;
+            // 两组完全相同的图片，配合 CSS translateX(-50%) 实现无缝循环
+            wrapper.innerHTML = items.map(itemHtml).join('') + items.map(itemHtml).join('');
+        }
+
+        // 渲染作品卡片（单个卡片模板）
+        function renderWorkCard(work, index) {
+            // 组图卡片占满整行（单列），普通作品占半列
+            const colSpan = work.isGroup ? 'md:col-span-2' : '';
+            // 组图封面使用更扁的比例，降低高度；组图不裁剪，允许预览图适度溢出边框
+            const aspectRatio = work.isGroup ? 'aspect-[3.2/1]' : 'aspect-video';
+            const cardShell = work.isGroup
+                ? 'liquid-glass rounded-2xl'
+                : 'liquid-glass rounded-2xl overflow-hidden';
+
+            return `
+                <div class="work-card group cursor-pointer fade-in ${colSpan}" style="animation-delay: ${Math.min(index * 0.08, 0.6)}s" data-work-id="${work.id}">
+                    <div class="${cardShell} glow-card">
+                        <!-- 封面区域 -->
+                        <div class="group-cover relative ${work.isGroup ? '' : 'overflow-hidden'} ${aspectRatio}">
+                            ${work.isGroup
+                                ? // 组图：三张倾斜交错排列预览 + 系列角标（previewImages 即 thumb 缩略图档）
+                                `<div class="series-badge">系列</div>
+                                <div class="group-tilted-images absolute inset-0 flex items-center justify-center">
+                                    <img src="${mediaUrl(work.previewImages[0])}" alt="" loading="lazy" decoding="async" class="absolute rounded-lg group-tilted-1">
+                                    <img src="${mediaUrl(work.previewImages[1])}" alt="" loading="lazy" decoding="async" class="absolute rounded-lg group-tilted-2">
+                                    <img src="${mediaUrl(work.previewImages[2])}" alt="" loading="lazy" decoding="async" class="absolute rounded-lg group-tilted-3">
+                                </div>`
+                                : // 单图/视频：普通封面（card 卡片图档）
+                                `<img src="${mediaUrl(work.card || work.thumb)}" alt="${work.title}" loading="lazy" decoding="async" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">`
+                            }
+                        </div>
+                        <!-- 信息区域 -->
+                        <div class="p-6">
+                            <h3 class="text-lg font-semibold mb-1">${work.title}</h3>
+                            <p class="text-apple-textSecondary text-sm">${work.mediaInfo}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 渲染作品区：自上而下分为三个大类（精选图片 / 组图展示 / 视频展示），每类左上有小标题
+        function renderWorks() {
+            const container = document.getElementById('worksGrid');
+            const inCategory = (w) => currentCategory === 'all' || w.category === currentCategory;
+
+            const sections = [
+                { title: '精选图片', sub: 'Featured Photography', list: works.filter(w => !w.isGroup && w.type !== 'video' && inCategory(w)) },
+                { title: '组图展示', sub: 'Photo Series',          list: works.filter(w => w.isGroup && inCategory(w)) },
+                { title: '视频展示', sub: 'Video Works',           list: works.filter(w => w.type === 'video' && inCategory(w)) },
+            ];
+
+            // 弹窗翻页仍基于筛选后的完整列表
+            currentFilteredWorks = sections.flatMap(s => s.list);
+
+            container.innerHTML = sections.filter(s => s.list.length > 0).map(s => `
+                <div class="md:col-span-2">
+                    <div class="flex items-baseline gap-3 mb-6">
+                        <h3 class="text-xl font-semibold">${s.title}</h3>
+                        <span class="text-sm text-apple-textSecondary">${s.sub}</span>
+                        <div class="flex-1 h-px bg-apple-border"></div>
+                        <span class="text-xs text-apple-textSecondary/70">${s.list.length} 个作品</span>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        ${s.list.map((work, index) => renderWorkCard(work, index)).join('')}
+                    </div>
+                </div>
+            `).join('');
+
+            // 绑定点击事件
+            container.querySelectorAll('.work-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    const workId = parseInt(card.dataset.workId);
+                    openPreviewModal(workId);
+                });
+            });
+
+            refitGroupPreviews(container);
+            refreshGlowRects();
+        }
+
+        // 组图预览图尺寸适配：按原图比例缩放，使预览图与卡片框大小匹配（不过度溢出、也不缩在框内）
+        function refitGroupPreviews(container) {
+            (container || document).querySelectorAll('.work-card').forEach(card => {
+                const images = card.querySelector('.group-tilted-images');
+                const cover = card.querySelector('.group-cover');
+                if (!images || !cover) return;
+
+                const fit = () => {
+                    const cr = cover.getBoundingClientRect();
+                    if (!cr.height) return;
+                    const targetH = cr.height * 1.06;   // 图高约为框高的 106%（与框匹配、轻微溢出）
+                    const maxW = cr.width * 0.34;       // 图宽不超过框宽的 34%
+                    // 以框中心为基准、按框尺寸比例固定三点定位（与图片自身比例解耦，构图稳定）
+                    const offsets = [
+                        { x: -0.30, y: 0.06 },   // 左图
+                        { x: 0,     y: -0.04 },  // 中图
+                        { x: 0.30,  y: 0.06 },   // 右图
+                    ];
+                    images.querySelectorAll('img').forEach((img, i) => {
+                        const nw = img.naturalWidth, nh = img.naturalHeight;
+                        if (!nw || !nh) return;
+                        const s = Math.min(targetH / nh, maxW / nw);
+                        const w = nw * s, h = nh * s;
+                        const o = offsets[i % 3];
+                        img.style.width = w.toFixed(1) + 'px';
+                        img.style.height = h.toFixed(1) + 'px';
+                        img.style.left = (cr.width / 2 + o.x * cr.width - w / 2).toFixed(1) + 'px';
+                        img.style.top = (cr.height / 2 + o.y * cr.height - h / 2).toFixed(1) + 'px';
+                    });
+                };
+
+                images.querySelectorAll('img').forEach(img => {
+                    if (img.complete && img.naturalWidth) fit();
+                    else img.addEventListener('load', fit, { once: true });
+                });
+            });
+        }
+
+        // 弹窗开关动画期间临时禁用 backdrop-filter（模糊+scale 组合每帧重算模糊是卡顿主因）
+        function setModalAnimating(cardEl, on) {
+            if (on) {
+                cardEl.style.setProperty('backdrop-filter', 'none', 'important');
+                cardEl.style.setProperty('-webkit-backdrop-filter', 'none', 'important');
+            } else {
+                cardEl.style.removeProperty('backdrop-filter');
+                cardEl.style.removeProperty('-webkit-backdrop-filter');
+            }
+        }
+
+        // 打开预览弹窗
+        function openPreviewModal(workId) {
+            // 找到当前作品在筛选列表中的索引
+            currentPreviewIndex = currentFilteredWorks.findIndex(w => w.id === workId);
+            const work = currentFilteredWorks[currentPreviewIndex];
+            if (!work) return;
+
+            const modal = document.getElementById('previewModal');
+            const cardEl = document.getElementById('modalCard');
+            const titleEl = document.getElementById('modalTitle');
+            const contentEl = document.getElementById('modalContent');
+
+            titleEl.textContent = work.title;
+
+            // 渲染弹窗内容
+            if (work.isGroup) {
+                // 组图：玻璃卡内双列展示，每张限高等比，图片底部不加背景框
+                cardEl.classList.remove('modal-card-single');
+                contentEl.innerHTML = `
+                    <p class="text-apple-textSecondary mb-6">${work.description}</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        ${work.fullImages.map((img, i) => `
+                            <img src="${mediaUrl(img)}" data-original="${mediaUrl((work.originalImages || [])[i] || img)}" alt=""
+                                 class="w-full max-h-[44vh] object-contain rounded-lg cursor-zoom-in"
+                                 loading="lazy" decoding="async" title="点击加载原图">
+                        `).join('')}
+                    </div>
+                    <p class="text-apple-textSecondary/60 text-xs text-center mt-4">点击任意图片可加载原图</p>
+                `;
+            } else if (work.type === 'video') {
+                // 视频：白卡内嵌播放器，限高避免溢出一屏
+                cardEl.classList.remove('modal-card-single');
+                contentEl.innerHTML = `
+                    <p class="text-apple-textSecondary mb-6">${work.description}</p>
+                    <video class="w-full max-h-[calc(92vh-200px)] object-contain rounded-lg bg-black" controls autoplay>
+                        <source src="${mediaUrl(work.videoSrc)}" type="video/mp4">
+                        您的浏览器不支持视频播放
+                    </video>
+                `;
+            } else {
+                // 单图：无边框灯箱，图片限高等比、一屏完整展示，无需上下滚动
+                // 先展示 large 大图档；用户点击图片后才加载原图
+                cardEl.classList.add('modal-card-single');
+                contentEl.innerHTML = `
+                    <img src="${mediaUrl(work.large || work.card)}" data-original="${mediaUrl(work.original || work.large || work.card)}" alt="${work.title}"
+                         class="block w-auto max-w-[88vw] mx-auto rounded-lg max-h-[calc(92vh-190px)] cursor-zoom-in"
+                         style="box-shadow: 0 24px 80px rgba(0,0,0,0.45);" title="点击加载原图">
+                    <p class="text-white/60 text-sm text-center mt-5 max-w-xl mx-auto">${work.description}</p>
+                    <p class="text-white/35 text-xs text-center mt-1">点击图片可加载原图</p>
+                `;
+            }
+
+            // 显示弹窗
+            setModalAnimating(cardEl, true);
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            let restored2 = false;
+            const restore2 = () => {
+                if (restored2) return;
+                restored2 = true;
+                setModalAnimating(cardEl, false);
+            };
+            cardEl.addEventListener('transitionend', function onEnd(e) {
+                if (e.propertyName === 'transform') {
+                    restore2();
+                    cardEl.removeEventListener('transitionend', onEnd);
+                }
+            });
+            setTimeout(restore2, 600);
+        }
+
+        // 打开滚动图的预览
+        function openScrollImagePreview(imgSrc, title) {
+            const modal = document.getElementById('previewModal');
+            const cardEl = document.getElementById('modalCard');
+            const titleEl = document.getElementById('modalTitle');
+            const contentEl = document.getElementById('modalContent');
+
+            titleEl.textContent = title || '';
+            // 无边框灯箱：限高等比，一屏完整展示；先显示 large 大图档，点击图片才加载原图
+            cardEl.classList.add('modal-card-single');
+            contentEl.innerHTML = `
+                <img src="${largeSrc}" data-original="${originalSrc || largeSrc}" alt="${title || ''}"
+                     class="block w-auto max-w-[88vw] mx-auto rounded-lg max-h-[calc(92vh-140px)] cursor-zoom-in"
+                     style="box-shadow: 0 24px 80px rgba(0,0,0,0.45);" title="点击加载原图">
+                <p class="text-white/35 text-xs text-center mt-3">点击图片可加载原图</p>
+            `;
+
+            // 显示弹窗：动画期间禁用 backdrop-filter 避免模糊重算卡顿，动画结束自动恢复
+            setModalAnimating(cardEl, true);
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            let restored = false;
+            const restore = () => {
+                if (restored) return;
+                restored = true;
+                setModalAnimating(cardEl, false);
+            };
+            cardEl.addEventListener('transitionend', function onEnd(e) {
+                if (e.propertyName === 'transform') {
+                    restore();
+                    cardEl.removeEventListener('transitionend', onEnd);
+                }
+            });
+            setTimeout(restore, 600); // 兜底：防止 transitionend 因动画中断不触发
+        }
+
+        // 灯箱内点击图片才加载原图：弹窗里所有带 data-original 的 <img>，
+        // 首次点击时把 src 换成未压缩的原图地址（预加载完成后再替换，避免闪烁）
+        function initOriginalImageLoader() {
+            const contentEl = document.getElementById('modalContent');
+            if (!contentEl) return;
+            contentEl.addEventListener('click', (e) => {
+                const img = e.target.closest('img[data-original]');
+                if (!img) return;
+                const original = img.dataset.original;
+                if (!original || img.dataset.loadingOriginal) return;
+                img.dataset.loadingOriginal = '1';
+                img.style.transition = 'opacity 0.2s ease';
+                img.style.opacity = '0.45';
+                const preload = new Image();
+                preload.onload = () => {
+                    img.src = original;
+                    img.style.opacity = '1';
+                    img.style.cursor = 'default';
+                    img.title = '原图';
+                    img.removeAttribute('data-original');
+                    delete img.dataset.loadingOriginal;
+                };
+                preload.onerror = () => {
+                    img.style.opacity = '1';
+                    delete img.dataset.loadingOriginal;
+                };
+                preload.src = original;
+            });
+        }
+
+        // 切换到上一个作品
+        function prevWork() {
+            currentPreviewIndex = (currentPreviewIndex - 1 + currentFilteredWorks.length) % currentFilteredWorks.length;
+            const work = currentFilteredWorks[currentPreviewIndex];
+            openPreviewModal(work.id);
+        }
+
+        // 切换到下一个作品
+        function nextWork() {
+            currentPreviewIndex = (currentPreviewIndex + 1) % currentFilteredWorks.length;
+            const work = currentFilteredWorks[currentPreviewIndex];
+            openPreviewModal(work.id);
+        }
+
+        // 关闭预览弹窗
+        function closePreviewModal() {
+            const modal = document.getElementById('previewModal');
+            const cardEl = document.getElementById('modalCard');
+            // 暂停所有视频
+            const videos = modal.querySelectorAll('video');
+            videos.forEach(v => v.pause());
+
+            // 关闭动画期间禁用 backdrop-filter 避免卡顿，动画结束后恢复滚动
+            setModalAnimating(cardEl, true);
+            modal.classList.remove('active');
+            let restored = false;
+            const restore = () => {
+                if (restored) return;
+                restored = true;
+                setModalAnimating(cardEl, false);
+                document.body.style.overflow = '';
+            };
+            cardEl.addEventListener('transitionend', function onEnd(e) {
+                if (e.propertyName === 'transform') {
+                    restore();
+                    cardEl.removeEventListener('transitionend', onEnd);
+                }
+            });
+            setTimeout(restore, 600);
+        }
+
+        // 卡片边框发光：鼠标靠近卡片时，边框邻近光标处点亮
+        // 性能优化：缓存卡片矩形（避免每次 pointermove 都 getBoundingClientRect 触发重排），
+        // pointermove 只读缓存做纯计算；在 renderWorks / resize 时刷新缓存
+        let _glowCards = []; // [{el, left, top, right, bottom}]
+        function refreshGlowRects() {
+            _glowCards = Array.from(document.querySelectorAll('.glow-card')).map(el => {
+                const r = el.getBoundingClientRect();
+                return { el, left: r.left, top: r.top, right: r.right, bottom: r.bottom };
+            });
+        }
+
+        function initCardGlow() {
+            const NEAR = 80; // 边框附近判定距离（px）
+
+            window.addEventListener('pointermove', (e) => {
+                const x = e.clientX, y = e.clientY;
+                for (const c of _glowCards) {
+                    const inZone = x >= c.left - NEAR && x <= c.right + NEAR
+                                && y >= c.top - NEAR && y <= c.bottom + NEAR;
+                    if (!inZone) {
+                        c.el.classList.remove('glow-active');
+                        continue;
+                    }
+                    c.el.style.setProperty('--gx', (x - c.left) + 'px');
+                    c.el.style.setProperty('--gy', (y - c.top) + 'px');
+                    const dx = Math.max(c.left - x, x - c.right, 0);
+                    const dy = Math.max(c.top - y, y - c.bottom, 0);
+                    c.el.classList.toggle('glow-active', Math.hypot(dx, dy) < NEAR);
+                }
+            }, { passive: true });
+
+            // 滚动 / 窗口变化时刷新矩形缓存（卡片位置可能改变）
+            let rf = 0;
+            const onLayout = () => {
+                if (rf) return;
+                rf = requestAnimationFrame(() => { rf = 0; refreshGlowRects(); });
+            };
+            window.addEventListener('scroll', onLayout, { passive: true });
+            window.addEventListener('resize', onLayout, { passive: true });
+        }
+
+        // 从 Cloudflare Worker 拉取 works.json，加载完成后渲染页面
+        async function loadWorks() {
+            try {
+                if (API_BASE.includes('YOUR-WORKER')) {
+                    console.warn('未配置 API_BASE（Worker 地址），作品列表为空。请填写 index.html 顶部的 API_BASE / MEDIA_BASE。');
+                    works = [];
+                } else {
+                    const res = await fetch(API_BASE + '/api/works', { cache: 'no-cache' });
+                    if (!res.ok) throw new Error('HTTP ' + res.status);
+                    const data = await res.json();
+                    works = Array.isArray(data.works) ? data.works : [];
+                }
+            } catch (err) {
+                console.error('作品列表加载失败：', err);
+                works = [];
+            }
+            renderCategories();
+            renderWorks();
+            renderScrollBar();          // 顶部滚动栏（thumb 缩略图档）
+        }
+
+        // ==================== 初始化 ====================
+        document.addEventListener('DOMContentLoaded', () => {
+            initCardGlow();
+            initOriginalImageLoader();  // 灯箱内点击图片加载原图
+            loadWorks();                // 拉取作品数据后渲染
+
+            // 关于页头像：data-src 支持 R2 key 或完整 URL，由 mediaUrl 统一处理
+            const profileImg = document.getElementById('aboutProfileImg');
+            if (profileImg && profileImg.dataset.src) {
+                profileImg.src = mediaUrl(profileImg.dataset.src);
+            }
+
+            // 窗口尺寸变化时重新适配组图预览图大小
+            window.addEventListener('resize', () => refitGroupPreviews(document), { passive: true });
+
+            // 绑定滚动图的点击事件（事件委托，兼容 JS 动态渲染的条目）
+            const scrollWrapper = document.getElementById('scrollWrapper');
+            if (scrollWrapper) {
+                scrollWrapper.addEventListener('click', (e) => {
+                    const item = e.target.closest('.scroll-item');
+                    if (!item) return;
+                    openScrollImagePreview(item.dataset.large, item.dataset.original, item.dataset.title);
+                });
+            }
+
+            // 绑定弹窗事件
+            document.getElementById('closeModal').addEventListener('click', closePreviewModal);
+            document.getElementById('previewModal').addEventListener('click', (e) => {
+                // 点击背景关闭
+                if (e.target.id === 'previewModal') {
+                    closePreviewModal();
+                }
+            });
+
+            // 绑定左右切换按钮
+            document.getElementById('prevBtn').addEventListener('click', prevWork);
+            document.getElementById('nextBtn').addEventListener('click', nextWork);
+
+            // 键盘快捷键
+            document.addEventListener('keydown', (e) => {
+                const modal = document.getElementById('previewModal');
+                if (!modal.classList.contains('active')) return;
+                
+                if (e.key === 'Escape') {
+                    closePreviewModal();
+                } else if (e.key === 'ArrowLeft') {
+                    prevWork();
+                } else if (e.key === 'ArrowRight') {
+                    nextWork();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
+
