@@ -1,0 +1,27 @@
+# Cloudflare Worker 配置 —— 光影集 API（上传中转 + works.json 读写）
+#
+# 部署步骤：
+#   1. 在 Cloudflare 控制台创建 R2 Bucket，名字填下面的 bucket_name（默认 guangyingji）
+#      并在 Bucket 设置里开启公开访问（r2.dev 临时域名，或绑定自定义域名作为图片域名）
+#   2. 本机安装并登录 wrangler：
+#        npm install -g wrangler
+#        wrangler login
+#   3. 在本文件所在目录执行：
+#        wrangler deploy
+#   4. 设置上传密钥（面板登录用，设置成你自己的长随机字符串）：
+#        wrangler secret put ADMIN_TOKEN
+#   5.（可选）导入现有作品种子数据：
+#        wrangler r2 object put guangyingji/works.json --file=works.seed.json --content-type="application/json; charset=utf-8"
+#
+# 部署后把 Worker 地址（https://guangyingji-api.<你的子域>.workers.dev）
+# 填到 index.html 的 API_BASE 和 admin.html 的 API_BASE；
+# 把 R2 公开域名填到 index.html / admin.html 的 MEDIA_BASE。
+
+name = "guangyingji-api"
+main = "worker.js"
+compatibility_date = "2026-09-01"
+
+# R2 存储桶绑定：Worker 代码中通过 env.BUCKET 访问
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "guangyingji"
