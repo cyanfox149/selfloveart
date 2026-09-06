@@ -1,7 +1,7 @@
 # Cloudflare Worker 配置 —— 光影集 API（上传中转 + works.json 读写）
 #
 # 部署步骤：
-#   1. 在 Cloudflare 控制台创建 R2 Bucket，名字填下面的 bucket_name（默认 guangyingji）
+#   1. 在 Cloudflare 控制台创建 R2 Bucket，名字填下面的 bucket_name（当前 selflove-gallery）
 #      并在 Bucket 设置里开启公开访问（r2.dev 临时域名，或绑定自定义域名作为图片域名）
 #   2. 本机安装并登录 wrangler：
 #        npm install -g wrangler
@@ -24,4 +24,4 @@ compatibility_date = "2026-09-01"
 # R2 存储桶绑定：Worker 代码中通过 env.BUCKET 访问
 [[r2_buckets]]
 binding = "BUCKET"
-bucket_name = "guangyingji"
+bucket_name = "selflove-gallery"
