@@ -40,19 +40,39 @@
  * -------------------------------------------------------------
  */
 
-const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-  'Access-Control-Max-Age': '86400',
-};
+// 允许跨域访问的来源白名单（站点自身域名、Workers 开发域、R2 镜像域）
+const CORS_ALLOWED = /^(https?:\/\/)?([a-z0-9-]+\.)*(selfloveart\.top|workers\.dev|r2\.dev)(:\d+)?$/i;
+
+// 根据请求来源动态返回 CORS 头：同源/白名单才放行，其余来源不返回 Allow-Origin（浏览器拦截跨域）
+function corsHeaders(request) {
+  const h = {
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Max-Age': '86400',
+    Vary: 'Origin',
+  };
+  const origin = request.headers.get('Origin');
+  if (origin && CORS_ALLOWED.test(origin)) {
+    h['Access-Control-Allow-Origin'] = origin;
+  }
+  // 无 Origin（同源 fetch / curl / 服务端）不需要 Allow-Origin，同源请求不受影响
+  return h;
+}
+
+// 恒定时间字符串比较，避免令牌校验的时序侧信道
+function timingSafeEqual(a, b) {
+  a = String(a); b = String(b);
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
 
 function json(data, init = {}) {
   return new Response(JSON.stringify(data), {
     ...init,
     headers: {
       'Content-Type': 'application/json; charset=utf-8',
-      ...CORS_HEADERS,
       ...(init.headers || {}),
     },
   });
@@ -61,50 +81,58 @@ function json(data, init = {}) {
 export default {
   async fetch(request, env) {
     if (request.method === 'OPTIONS') {
-      return new Response(null, { headers: CORS_HEADERS });
+      return new Response(null, { headers: corsHeaders(request) });
+    }
+    const ch = corsHeaders(request);
+    let res;
+    try {
+      res = await this.route(request, env);
+    } catch (err) {
+      res = json({ error: err && err.message ? err.message : String(err) }, { status: 500 });
+    }
+    // 统一注入按来源校验过的 CORS 头
+    for (const [k, v] of Object.entries(ch)) res.headers.set(k, v);
+    return res;
+  },
+
+  async route(request, env) {
+    const url = new URL(request.url);
+    if (url.pathname === '/api/health') {
+      return json({ ok: true, ts: Date.now() });
+    }
+    if (url.pathname === '/api/works' && request.method === 'GET') {
+      return await this.getWorks(env);
+    }
+    if (url.pathname === '/api/upload' && request.method === 'POST') {
+      return await this.upload(request, env);
     }
 
-    const url = new URL(request.url);
-    try {
-      if (url.pathname === '/api/health') {
-        return json({ ok: true, ts: Date.now() });
-      }
-      if (url.pathname === '/api/works' && request.method === 'GET') {
-        return await this.getWorks(env);
-      }
-      if (url.pathname === '/api/upload' && request.method === 'POST') {
-        return await this.upload(request, env);
-      }
+    // GET /m/<R2 对象 key>：同域媒体代理，后台缩略图/预览走此路由，
+    // 避免依赖独立媒体域名（r2.dev / 自定义域名）可达性，API 能通图片就能显示
+    if (request.method === 'GET' && url.pathname.startsWith('/m/')) {
+      return await this.serveMedia(env, url.pathname.slice(3));
+    }
 
-      // GET /m/<R2 对象 key>：同域媒体代理，后台缩略图/预览走此路由，
-      // 避免依赖独立媒体域名（r2.dev / 自定义域名）可达性，API 能通图片就能显示
-      if (request.method === 'GET' && url.pathname.startsWith('/m/')) {
-        return await this.serveMedia(env, url.pathname.slice(3));
-      }
-
-      // ---- 作品管理路由：/api/works/:id[/images[/:index]] ----
-      const parts = url.pathname.split('/').filter(Boolean);
-      if (parts[0] === 'api' && parts[1] === 'works' && parts[2]) {
-        const id = Number(parts[2]);
-        if (!parts[3]) {
-          if (request.method === 'DELETE') return await this.deleteWork(request, env, id);
-          if (request.method === 'PUT') return await this.updateWork(request, env, id);
-        } else if (parts[3] === 'images') {
-          if (!parts[4] && request.method === 'POST') {
-            return await this.addGroupImages(request, env, id);
-          }
-          if (parts[4]) {
-            const index = Number(parts[4]);
-            if (request.method === 'DELETE') return await this.removeGroupImage(request, env, id, index);
-            if (request.method === 'PUT') return await this.replaceImage(request, env, id, index);
-          }
+    // ---- 作品管理路由：/api/works/:id[/images[/:index]] ----
+    const parts = url.pathname.split('/').filter(Boolean);
+    if (parts[0] === 'api' && parts[1] === 'works' && parts[2]) {
+      const id = Number(parts[2]);
+      if (!parts[3]) {
+        if (request.method === 'DELETE') return await this.deleteWork(request, env, id);
+        if (request.method === 'PUT') return await this.updateWork(request, env, id);
+      } else if (parts[3] === 'images') {
+        if (!parts[4] && request.method === 'POST') {
+          return await this.addGroupImages(request, env, id);
+        }
+        if (parts[4]) {
+          const index = Number(parts[4]);
+          if (request.method === 'DELETE') return await this.removeGroupImage(request, env, id, index);
+          if (request.method === 'PUT') return await this.replaceImage(request, env, id, index);
         }
       }
-
-      return json({ error: 'not found' }, { status: 404 });
-    } catch (err) {
-      return json({ error: err && err.message ? err.message : String(err) }, { status: 500 });
     }
+
+    return json({ error: 'not found' }, { status: 404 });
   },
 
   /** 读取作品列表；works.json 不存在时返回空列表 */
@@ -115,7 +143,6 @@ export default {
       headers: {
         'Content-Type': 'application/json; charset=utf-8',
         'Cache-Control': 'public, max-age=30',
-        ...CORS_HEADERS,
       },
     });
   },
@@ -132,14 +159,13 @@ export default {
     if (!obj) {
       return new Response('not found: ' + decoded, {
         status: 404,
-        headers: { ...CORS_HEADERS, 'Content-Type': 'text/plain; charset=utf-8' },
+        headers: { 'Content-Type': 'text/plain; charset=utf-8' },
       });
     }
     return new Response(obj.body, {
       headers: {
         'Content-Type': (obj.httpMetadata && obj.httpMetadata.contentType) || 'application/octet-stream',
         'Cache-Control': 'public, max-age=86400',
-        ...CORS_HEADERS,
       },
     });
   },
@@ -169,7 +195,7 @@ export default {
   checkAuth(request, env) {
     const auth = request.headers.get('Authorization') || '';
     const token = auth.replace(/^Bearer\s+/i, '').trim();
-    if (!env.ADMIN_TOKEN || token !== env.ADMIN_TOKEN) {
+    if (!env.ADMIN_TOKEN || !timingSafeEqual(token, env.ADMIN_TOKEN)) {
       return json({ error: 'unauthorized：令牌无效' }, { status: 401 });
     }
     return null;
@@ -200,7 +226,7 @@ export default {
     // ---- 鉴权：Bearer Token（wrangler secret put ADMIN_TOKEN）----
     const auth = request.headers.get('Authorization') || '';
     const token = auth.replace(/^Bearer\s+/i, '').trim();
-    if (!env.ADMIN_TOKEN || token !== env.ADMIN_TOKEN) {
+    if (!env.ADMIN_TOKEN || !timingSafeEqual(token, env.ADMIN_TOKEN)) {
       return json({ error: 'unauthorized：令牌无效' }, { status: 401 });
     }
 
