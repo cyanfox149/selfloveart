@@ -484,13 +484,22 @@
     const mgmtList = $('mgmtList'), mgmtStatus = $('mgmtStatus');
     let mgmtWorks = [];
 
-    // 后台缩略图统一走 Worker 同域代理（API 能通 → 图片就能显示），不依赖独立媒体域名
+    // 缩略图地址：优先独立媒体域名（R2 直出，独立连接池、不占用 Worker 请求配额），
+    // 媒体域名未配置时回退到 Worker 同域代理 /m/（API 能通 → 图片就能显示）
+    function encPath(key) {
+        return String(key).replace(/^\//, '').split('/').map(encodeURIComponent).join('/');
+    }
     function mediaUrl(key) {
         if (!key) return '';
         if (/^https?:\/\//i.test(key)) return key;
-        const path = String(key).replace(/^\//, '').split('/').map(encodeURIComponent).join('/');
-        const base = API() || location.origin;
-        return base + '/m/' + path;
+        const path = encPath(key);
+        return (MEDIA() || (API() || location.origin) + '/m') + '/' + path;
+    }
+    // 媒体域名加载失败 → 回退到同域 /m/ 代理（仅回退一次，避免死循环）
+    function mgmtImgFallback(img, key) {
+        if (!key || /^https?:\/\//i.test(key) || img.dataset.fallback) return;
+        img.dataset.fallback = '1';
+        img.src = (API() || location.origin) + '/m/' + encPath(key);
     }
 
     $('btnLoadMgmt').addEventListener('click', loadMgmtWorks);
@@ -518,7 +527,7 @@
             const thumb = w.thumb || (w.previewImages && w.previewImages[0]) || '';
             const typeLabel = w.isGroup ? '组图' : (w.type === 'video' ? '视频' : '单图');
             div.innerHTML = `
-                <img class="mgmt-thumb" src="${mediaUrl(thumb)}" alt="" onerror="this.style.opacity=0.3">
+                <img class="mgmt-thumb" src="${mediaUrl(thumb)}" data-mkey="${thumb}" loading="lazy" alt="" onerror="mgmtImgFallback(this, this.dataset.mkey); if(this.dataset.fallback) this.style.opacity=0.3;">
                 <div class="mgmt-info">
                     <div class="title">${w.title}</div>
                     <div class="meta">ID:${w.id} · ${typeLabel} · ${w.category} · ${w.mediaInfo || ''}</div>
@@ -610,7 +619,7 @@
     function renderGroupImages(work, imgs, origImgs) {
         const items = imgs.map((img, i) => `
             <div class="mimg">
-                <img src="${mediaUrl(img)}" alt="" onerror="this.style.opacity=0.3">
+                <img src="${mediaUrl(img)}" data-mkey="${img}" loading="lazy" alt="" onerror="mgmtImgFallback(this, this.dataset.mkey); if(this.dataset.fallback) this.style.opacity=0.3;">
                 <button class="rm" data-del-img="${i}" title="删除">×</button>
                 <button class="repl" data-repl-img="${i}" title="替换">替换</button>
                 <input type="file" accept="image/*" class="repl-img-input-${i}" hidden>
