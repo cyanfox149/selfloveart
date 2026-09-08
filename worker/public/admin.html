@@ -51,6 +51,26 @@
             overflow:auto; max-height:280px; white-space:pre-wrap; word-break:break-all; }
     .result a { color:#67b7ff; word-break:break-all; }
     .hint { font-size:12px; color:var(--sub); margin-top:6px; }
+    .mgmt-list { display:flex; flex-direction:column; gap:12px; }
+    .mgmt-item { border:1px solid var(--line); border-radius:12px; padding:14px; display:flex; gap:12px; align-items:flex-start; }
+    .mgmt-item img.mgmt-thumb { width:64px; height:64px; object-fit:cover; border-radius:8px; border:1px solid var(--line); flex-shrink:0; }
+    .mgmt-info { flex:1; min-width:0; }
+    .mgmt-info .title { font-size:15px; font-weight:500; }
+    .mgmt-info .meta { font-size:12px; color:var(--sub); margin-top:2px; }
+    .mgmt-actions { display:flex; gap:8px; flex-wrap:wrap; }
+    .mgmt-edit { border:1px solid var(--line); border-radius:12px; padding:14px; margin-top:10px; display:none; }
+    .mgmt-edit.show { display:block; }
+    .mgmt-images { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+    .mgmt-images .mimg { position:relative; width:72px; }
+    .mgmt-images .mimg img { width:72px; height:72px; object-fit:cover; border-radius:8px; border:1px solid var(--line); }
+    .mgmt-images .mimg .rm { position:absolute; top:-5px; right:-5px; width:20px; height:20px; border-radius:50%;
+            background:#ff3b30; color:#fff; border:none; cursor:pointer; font-size:12px; line-height:20px; }
+    .mgmt-images .mimg .repl { position:absolute; bottom:-5px; left:50%; transform:translateX(-50%);
+            font-size:10px; background:var(--primary); color:#fff; border:none; border-radius:8px; padding:2px 6px; cursor:pointer; white-space:nowrap; }
+    button.danger { background:#ff3b30; color:#fff; border:none; border-radius:999px; padding:8px 16px;
+            font-size:13px; cursor:pointer; }
+    button.danger:hover { background:#e0332b; }
+    button.act.sm { padding:8px 18px; font-size:13px; }
 </style>
 </head>
 <body>
@@ -148,6 +168,15 @@
             <span class="status" id="uploadStatus"></span>
         </div>
         <div class="result" id="result"></div>
+    </div>
+
+    <!-- 作品管理 -->
+    <div class="card">
+        <h2>4. 作品管理</h2>
+        <p class="hint" style="margin-bottom:12px;">修改标题/描述/分类、删除作品、组图内增删/替换图片。</p>
+        <button class="ghost" id="btnLoadMgmt" type="button">加载作品列表</button>
+        <span class="status" id="mgmtStatus"></span>
+        <div class="mgmt-list" id="mgmtList"></div>
     </div>
 </div>
 
@@ -448,6 +477,352 @@
             st.textContent = '发布失败：' + e.message;
         } finally {
             btn.disabled = false;
+        }
+    });
+
+    // ==================== 作品管理 ====================
+    const mgmtList = $('mgmtList'), mgmtStatus = $('mgmtStatus');
+    let mgmtWorks = [];
+
+    function mediaUrl(key) {
+        if (!key) return '';
+        if (/^https?:\/\//i.test(key)) return key;
+        const path = String(key).replace(/^\//, '').split('/').map(encodeURIComponent).join('/');
+        return MEDIA() + '/' + path;
+    }
+
+    $('btnLoadMgmt').addEventListener('click', loadMgmtWorks);
+
+    async function loadMgmtWorks() {
+        saveConfig();
+        const st = mgmtStatus;
+        st.className = 'status'; st.textContent = '加载中…';
+        try {
+            const r = await fetch(`${API()}/api/works`, { cache: 'no-cache' });
+            const d = await r.json();
+            mgmtWorks = Array.isArray(d.works) ? d.works : [];
+            st.className = 'status ok'; st.textContent = `✓ 已加载 ${mgmtWorks.length} 个作品`;
+            renderMgmtList();
+        } catch (e) {
+            st.className = 'status err'; st.textContent = '加载失败：' + e.message;
+        }
+    }
+
+    function renderMgmtList() {
+        mgmtList.innerHTML = '';
+        mgmtWorks.forEach(w => {
+            const div = document.createElement('div');
+            div.className = 'mgmt-item';
+            const thumb = w.thumb || (w.previewImages && w.previewImages[0]) || '';
+            const typeLabel = w.isGroup ? '组图' : (w.type === 'video' ? '视频' : '单图');
+            div.innerHTML = `
+                <img class="mgmt-thumb" src="${mediaUrl(thumb)}" alt="" onerror="this.style.opacity=0.3">
+                <div class="mgmt-info">
+                    <div class="title">${w.title}</div>
+                    <div class="meta">ID:${w.id} · ${typeLabel} · ${w.category} · ${w.mediaInfo || ''}</div>
+                </div>
+                <div class="mgmt-actions">
+                    <button class="ghost" data-act="edit">编辑</button>
+                    <button class="danger" data-act="del">删除</button>
+                </div>
+                <div class="mgmt-edit"></div>
+            `;
+            div.querySelector('[data-act="edit"]').addEventListener('click', () => toggleEdit(div, w));
+            div.querySelector('[data-act="del"]').addEventListener('click', () => deleteWork(w));
+            mgmtList.appendChild(div);
+        });
+    }
+
+    function toggleEdit(itemDiv, work) {
+        const editDiv = itemDiv.querySelector('.mgmt-edit');
+        if (editDiv.classList.contains('show')) { editDiv.classList.remove('show'); return; }
+        editDiv.classList.add('show');
+
+        // 编辑表单
+        const imgs = work.fullImages || (work.large ? [work.large] : []);
+        const origImgs = work.originalImages || (work.original ? [work.original] : []);
+        editDiv.innerHTML = `
+            <label>标题</label>
+            <input type="text" class="ed-title" value="${(work.title || '').replace(/"/g, '&quot;')}">
+            <div class="row" style="margin-top:8px;">
+                <div>
+                    <label>分类</label>
+                    <select class="ed-category">
+                        <option value="landscape" ${work.category==='landscape'?'selected':''}>风光</option>
+                        <option value="portrait" ${work.category==='portrait'?'selected':''}>人像</option>
+                        <option value="art" ${work.category==='art'?'selected':''}>艺术</option>
+                        <option value="sports" ${work.category==='sports'?'selected':''}>赛事</option>
+                        <option value="conference" ${work.category==='conference'?'selected':''}>会议</option>
+                        <option value="video" ${work.category==='video'?'selected':''}>视频</option>
+                    </select>
+                </div>
+                <div>
+                    <label>媒体信息</label>
+                    <input type="text" class="ed-mediainfo" value="${(work.mediaInfo || '').replace(/"/g, '&quot;')}">
+                </div>
+            </div>
+            <label style="margin-top:8px;">描述</label>
+            <textarea class="ed-desc">${work.description || ''}</textarea>
+            ${work.isGroup ? renderGroupImages(work, imgs, origImgs) : (work.type !== 'video' ? `
+                <div style="margin-top:10px;">
+                    <button class="ghost" data-replace-single>替换图片</button>
+                    <input type="file" accept="image/*" class="replace-single-input" hidden>
+                </div>
+            ` : `
+                <div style="margin-top:10px;">
+                    <button class="ghost" data-replace-cover>替换封面</button>
+                    <input type="file" accept="image/*" class="replace-cover-input" hidden>
+                </div>
+            `)}
+            <div style="margin-top:12px; display:flex; gap:8px; align-items:center;">
+                <button class="act sm" data-act="save">保存修改</button>
+                <span class="status ed-status"></span>
+            </div>
+        `;
+
+        editDiv.querySelector('[data-act="save"]').addEventListener('click', () => saveWorkEdit(editDiv, work));
+        if (work.isGroup) {
+            editDiv.querySelectorAll('[data-del-img]').forEach(btn => btn.addEventListener('click', () => removeGroupImage(work, parseInt(btn.dataset.delImg))));
+            const addInput = editDiv.querySelector('.add-img-input');
+            if (addInput) addInput.addEventListener('change', () => addGroupImages(work, addInput.files, editDiv));
+            editDiv.querySelectorAll('[data-repl-img]').forEach(btn => btn.addEventListener('click', () => {
+                const input = editDiv.querySelector(`.repl-img-input-${btn.dataset.replImg}`);
+                if (input) input.click();
+            }));
+            editDiv.querySelectorAll('[class*="repl-img-input-"]').forEach(inp => {
+                inp.addEventListener('change', () => replaceGroupImage(work, parseInt(inp.className.match(/repl-img-input-(\d+)/)[1]), inp.files[0], editDiv));
+            });
+        } else if (work.type !== 'video') {
+            const btn = editDiv.querySelector('[data-replace-single]');
+            const inp = editDiv.querySelector('.replace-single-input');
+            btn.addEventListener('click', () => inp.click());
+            inp.addEventListener('change', () => replaceSingleImage(work, inp.files[0], editDiv));
+        } else {
+            const btn = editDiv.querySelector('[data-replace-cover]');
+            const inp = editDiv.querySelector('.replace-cover-input');
+            btn.addEventListener('click', () => inp.click());
+            inp.addEventListener('change', () => replaceVideoCover(work, inp.files[0], editDiv));
+        }
+    }
+
+    function renderGroupImages(work, imgs, origImgs) {
+        const items = imgs.map((img, i) => `
+            <div class="mimg">
+                <img src="${mediaUrl(img)}" alt="" onerror="this.style.opacity=0.3">
+                <button class="rm" data-del-img="${i}" title="删除">×</button>
+                <button class="repl" data-repl-img="${i}" title="替换">替换</button>
+                <input type="file" accept="image/*" class="repl-img-input-${i}" hidden>
+            </div>
+        `).join('');
+        return `
+            <label style="margin-top:10px;">组图图片（${imgs.length}张）</label>
+            <div class="mgmt-images">${items}</div>
+            <div style="margin-top:8px;">
+                <button class="ghost" data-add-img>添加图片</button>
+                <input type="file" accept="image/*" multiple class="add-img-input" hidden>
+            </div>
+        `;
+    }
+
+    async function saveWorkEdit(editDiv, work) {
+        const st = editDiv.querySelector('.ed-status');
+        const title = editDiv.querySelector('.ed-title').value.trim();
+        const category = editDiv.querySelector('.ed-category').value;
+        const mediaInfo = editDiv.querySelector('.ed-mediainfo').value.trim();
+        const desc = editDiv.querySelector('.ed-desc').value.trim();
+        if (!title) { st.className = 'status err'; st.textContent = '标题不能为空'; return; }
+        st.className = 'status'; st.textContent = '保存中…';
+        try {
+            const r = await fetch(`${API()}/api/works/${work.id}`, {
+                method: 'PUT',
+                headers: { 'Authorization': `Bearer ${tokenEl.value.trim()}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title, category, mediaInfo, description: desc })
+            });
+            const d = await r.json();
+            if (!r.ok || !d.ok) throw new Error(d.error || ('HTTP ' + r.status));
+            Object.assign(work, d.work);
+            st.className = 'status ok'; st.textContent = '✓ 已保存';
+            renderMgmtList();
+        } catch (e) {
+            st.className = 'status err'; st.textContent = '保存失败：' + e.message;
+        }
+    }
+
+    async function deleteWork(work) {
+        if (!confirm(`确定删除「${work.title}」？此操作不可恢复。`)) return;
+        const st = mgmtStatus;
+        st.className = 'status'; st.textContent = '删除中…';
+        try {
+            const r = await fetch(`${API()}/api/works/${work.id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${tokenEl.value.trim()}` }
+            });
+            const d = await r.json();
+            if (!r.ok || !d.ok) throw new Error(d.error || ('HTTP ' + r.status));
+            st.className = 'status ok'; st.textContent = `✓ 已删除「${work.title}」`;
+            await loadMgmtWorks();
+        } catch (e) {
+            st.className = 'status err'; st.textContent = '删除失败：' + e.message;
+        }
+    }
+
+    async function removeGroupImage(work, idx) {
+        if (!confirm(`从组图中删除第 ${idx + 1} 张？`)) return;
+        const st = mgmtStatus;
+        st.className = 'status'; st.textContent = '删除中…';
+        try {
+            const r = await fetch(`${API()}/api/works/${work.id}/images/${idx}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${tokenEl.value.trim()}` }
+            });
+            const d = await r.json();
+            if (!r.ok || !d.ok) throw new Error(d.error || ('HTTP ' + r.status));
+            st.className = 'status ok'; st.textContent = '✓ 已删除';
+            await loadMgmtWorks();
+        } catch (e) {
+            st.className = 'status err'; st.textContent = '删除失败：' + e.message;
+        }
+    }
+
+    async function addGroupImages(work, fileList, editDiv) {
+        const st = editDiv.querySelector('.ed-status') || mgmtStatus;
+        st.className = 'status'; st.textContent = '压缩并上传中…';
+        const compressCfg = compressChk.checked ? {
+            enabled: true,
+            maxWidth: Math.max(800, Math.min(4000, parseInt($('compressWidth').value) || 2400)),
+            quality: Math.max(40, Math.min(100, parseInt($('compressQuality').value) || 82)),
+        } : { enabled: false };
+        const form = new FormData();
+        const arr = Array.from(fileList).filter(f => f.type.startsWith('image/'));
+        for (let i = 0; i < arr.length; i++) {
+            const ext = (arr[i].name.split('.').pop() || 'jpg').toLowerCase();
+            await buildImageTiers(form, i, arr[i], ext, compressCfg);
+        }
+        form.append('meta', JSON.stringify({ items: arr.length }));
+        try {
+            const r = await fetch(`${API()}/api/works/${work.id}/images`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${tokenEl.value.trim()}` },
+                body: form
+            });
+            const d = await r.json();
+            if (!r.ok || !d.ok) throw new Error(d.error || ('HTTP ' + r.status));
+            st.className = 'status ok'; st.textContent = `✓ 已添加 ${arr.length} 张`;
+            await loadMgmtWorks();
+        } catch (e) {
+            st.className = 'status err'; st.textContent = '添加失败：' + e.message;
+        }
+    }
+
+    async function replaceGroupImage(work, idx, file, editDiv) {
+        if (!file) return;
+        const st = editDiv.querySelector('.ed-status') || mgmtStatus;
+        st.className = 'status'; st.textContent = '压缩并替换中…';
+        const compressCfg = compressChk.checked ? {
+            enabled: true,
+            maxWidth: Math.max(800, Math.min(4000, parseInt($('compressWidth').value) || 2400)),
+            quality: Math.max(40, Math.min(100, parseInt($('compressQuality').value) || 82)),
+        } : { enabled: false };
+        const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+        const form = new FormData();
+        await buildImageTiers(form, 0, file, ext, compressCfg);
+        // 重命名 file 字段（buildImageTiers 用 0_ 前缀，replace 接口需要无前缀）
+        for (const [k] of [...form.entries()]) {
+            if (k.startsWith('0_')) {
+                const v = form.get(k);
+                form.delete(k);
+                form.append(k.replace('0_', ''), v);
+            }
+        }
+        try {
+            const r = await fetch(`${API()}/api/works/${work.id}/images/${idx}`, {
+                method: 'PUT',
+                headers: { 'Authorization': `Bearer ${tokenEl.value.trim()}` },
+                body: form
+            });
+            const d = await r.json();
+            if (!r.ok || !d.ok) throw new Error(d.error || ('HTTP ' + r.status));
+            st.className = 'status ok'; st.textContent = '✓ 已替换';
+            await loadMgmtWorks();
+        } catch (e) {
+            st.className = 'status err'; st.textContent = '替换失败：' + e.message;
+        }
+    }
+
+    async function replaceSingleImage(work, file, editDiv) {
+        if (!file) return;
+        const st = editDiv.querySelector('.ed-status') || mgmtStatus;
+        st.className = 'status'; st.textContent = '压缩并替换中…';
+        const compressCfg = compressChk.checked ? {
+            enabled: true,
+            maxWidth: Math.max(800, Math.min(4000, parseInt($('compressWidth').value) || 2400)),
+            quality: Math.max(40, Math.min(100, parseInt($('compressQuality').value) || 82)),
+        } : { enabled: false };
+        const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+        const form = new FormData();
+        await buildImageTiers(form, 0, file, ext, compressCfg);
+        for (const [k] of [...form.entries()]) {
+            if (k.startsWith('0_')) {
+                const v = form.get(k);
+                form.delete(k);
+                form.append(k.replace('0_', ''), v);
+            }
+        }
+        try {
+            const r = await fetch(`${API()}/api/works/${work.id}/images/0`, {
+                method: 'PUT',
+                headers: { 'Authorization': `Bearer ${tokenEl.value.trim()}` },
+                body: form
+            });
+            const d = await r.json();
+            if (!r.ok || !d.ok) throw new Error(d.error || ('HTTP ' + r.status));
+            st.className = 'status ok'; st.textContent = '✓ 已替换';
+            await loadMgmtWorks();
+        } catch (e) {
+            st.className = 'status err'; st.textContent = '替换失败：' + e.message;
+        }
+    }
+
+    async function replaceVideoCover(work, file, editDiv) {
+        if (!file) return;
+        const st = editDiv.querySelector('.ed-status') || mgmtStatus;
+        st.className = 'status'; st.textContent = '压缩并替换封面中…';
+        const compressCfg = compressChk.checked ? {
+            enabled: true,
+            maxWidth: Math.max(800, Math.min(4000, parseInt($('compressWidth').value) || 2400)),
+            quality: Math.max(40, Math.min(100, parseInt($('compressQuality').value) || 82)),
+        } : { enabled: false };
+        const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+        const form = new FormData();
+        await buildImageTiers(form, 0, file, ext, compressCfg);
+        for (const [k] of [...form.entries()]) {
+            if (k.startsWith('0_')) {
+                const v = form.get(k);
+                form.delete(k);
+                form.append(k.replace('0_', ''), v);
+            }
+        }
+        try {
+            const r = await fetch(`${API()}/api/works/${work.id}/images/0`, {
+                method: 'PUT',
+                headers: { 'Authorization': `Bearer ${tokenEl.value.trim()}` },
+                body: form
+            });
+            const d = await r.json();
+            if (!r.ok || !d.ok) throw new Error(d.error || ('HTTP ' + r.status));
+            st.className = 'status ok'; st.textContent = '✓ 封面已替换';
+            await loadMgmtWorks();
+        } catch (e) {
+            st.className = 'status err'; st.textContent = '替换失败：' + e.message;
+        }
+    }
+
+    // 添加图片按钮事件委托
+    mgmtList.addEventListener('click', (e) => {
+        const addBtn = e.target.closest('[data-add-img]');
+        if (addBtn) {
+            const input = addBtn.parentElement.querySelector('.add-img-input');
+            if (input) input.click();
         }
     });
 </script>

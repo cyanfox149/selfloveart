@@ -282,8 +282,8 @@
         /* ============ 液态高斯玻璃质感 ============ */
         .liquid-glass {
             background: linear-gradient(135deg, rgba(255, 255, 255, 0.60), rgba(255, 255, 255, 0.34));
-            -webkit-backdrop-filter: blur(28px) saturate(180%);
-            backdrop-filter: blur(28px) saturate(180%);
+            -webkit-backdrop-filter: blur(16px) saturate(160%);
+            backdrop-filter: blur(16px) saturate(160%);
             border: 1px solid rgba(255, 255, 255, 0.70);
             box-shadow: 0 8px 32px rgba(31, 66, 135, 0.10),
                         inset 0 1px 0 rgba(255, 255, 255, 0.90),
@@ -292,9 +292,9 @@
 
         /* 全宽条带版本（页头 / 区块 / 页脚）：无圆角与侧边框 */
         .liquid-glass-bar {
-            background: linear-gradient(180deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.40));
-            -webkit-backdrop-filter: blur(28px) saturate(180%);
-            backdrop-filter: blur(28px) saturate(180%);
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.50));
+            -webkit-backdrop-filter: blur(14px) saturate(150%);
+            backdrop-filter: blur(14px) saturate(150%);
         }
 
         /* ============ 背景整体纹理流动（替代漂浮小元素） ============ */
@@ -544,7 +544,10 @@
         .group-tilted-images img {
             transition: all 0.4s cubic-bezier(0.25, 0.1, 0.25, 1);
             box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-            /* 尺寸由 refitGroupPreviews() 按原图比例计算，保证与卡片框大小匹配 */
+            /* 初始尺寸防止加载前全尺寸闪烁，refitGroupPreviews() 会按原图比例精确计算 */
+            width: 200px;
+            height: 130px;
+            object-fit: cover;
         }
         
         .series-badge {
@@ -596,18 +599,12 @@
     <!-- 苹果官网风格极简渐变背景动效（aurora 光晕） -->
     <div class="bg-aurora" aria-hidden="true">
         <div class="aurora-blob aurora-1"></div>
-        <div class="aurora-blob aurora-2"></div>
         <div class="aurora-blob aurora-3"></div>
-        <div class="aurora-blob aurora-4"></div>
         <div class="aurora-blob aurora-5"></div>
-        <div class="aurora-blob aurora-6"></div>
-        <div class="aurora-blob aurora-7"></div>
     </div>
 
-    <!-- 背景整体纹理流动（丝绸光带 / 柔焦波纹 / 胶片颗粒） -->
+    <!-- 背景胶片颗粒（静态） -->
     <div class="bg-texture" aria-hidden="true">
-        <div class="texture-silk"></div>
-        <div class="texture-mesh"></div>
         <div class="texture-grain"></div>
     </div>
 
@@ -658,7 +655,7 @@
     </section>
 
     <!-- About Section -->
-    <section id="about" class="liquid-glass-bar py-20">
+    <section id="about" class="liquid-glass-bar py-20" style="content-visibility: auto; contain-intrinsic-size: auto 600px;">
         <div class="max-w-5xl mx-auto px-6">
             <div class="grid md:grid-cols-2 gap-12 items-center">
                 <div>
@@ -682,7 +679,7 @@
     </section>
 
     <!-- Contact Section -->
-    <section id="contact" class="max-w-5xl mx-auto px-6 py-20 text-center">
+    <section id="contact" class="max-w-5xl mx-auto px-6 py-20 text-center" style="content-visibility: auto; contain-intrinsic-size: auto 400px;">
         <h3 class="text-3xl font-semibold mb-6">联系我</h3>
         <p class="text-apple-textSecondary mb-8 max-w-xl mx-auto">
             如果您对我的作品感兴趣，或者有合作需求，欢迎随时与我联系。
@@ -1021,7 +1018,7 @@
         }
 
         // 打开滚动图的预览
-        function openScrollImagePreview(imgSrc, title) {
+        function openScrollImagePreview(largeSrc, originalSrc, title) {
             const modal = document.getElementById('previewModal');
             const cardEl = document.getElementById('modalCard');
             const titleEl = document.getElementById('modalTitle');
