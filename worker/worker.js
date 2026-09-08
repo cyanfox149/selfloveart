@@ -76,6 +76,12 @@ export default {
         return await this.upload(request, env);
       }
 
+      // GET /m/<R2 对象 key>：同域媒体代理，后台缩略图/预览走此路由，
+      // 避免依赖独立媒体域名（r2.dev / 自定义域名）可达性，API 能通图片就能显示
+      if (request.method === 'GET' && url.pathname.startsWith('/m/')) {
+        return await this.serveMedia(env, url.pathname.slice(3));
+      }
+
       // ---- 作品管理路由：/api/works/:id[/images[/:index]] ----
       const parts = url.pathname.split('/').filter(Boolean);
       if (parts[0] === 'api' && parts[1] === 'works' && parts[2]) {
@@ -109,6 +115,30 @@ export default {
       headers: {
         'Content-Type': 'application/json; charset=utf-8',
         'Cache-Control': 'public, max-age=30',
+        ...CORS_HEADERS,
+      },
+    });
+  },
+
+  /** 同域媒体代理：GET /m/<key> → 从 R2 读取并流式返回（供后台缩略图使用） */
+  async serveMedia(env, key) {
+    let decoded;
+    try {
+      decoded = decodeURIComponent(key);
+    } catch {
+      decoded = key;
+    }
+    const obj = await env.BUCKET.get(decoded);
+    if (!obj) {
+      return new Response('not found: ' + decoded, {
+        status: 404,
+        headers: { ...CORS_HEADERS, 'Content-Type': 'text/plain; charset=utf-8' },
+      });
+    }
+    return new Response(obj.body, {
+      headers: {
+        'Content-Type': (obj.httpMetadata && obj.httpMetadata.contentType) || 'application/octet-stream',
+        'Cache-Control': 'public, max-age=86400',
         ...CORS_HEADERS,
       },
     });

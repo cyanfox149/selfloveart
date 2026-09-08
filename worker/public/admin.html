@@ -188,8 +188,8 @@
     };
     const $ = id => document.getElementById(id);
     const apiBaseEl = $('apiBase'), mediaBaseEl = $('mediaBase'), tokenEl = $('token');
-    apiBaseEl.value = LS.get('gyj_api_base') || '';
-    mediaBaseEl.value = LS.get('gyj_media_base') || '';
+    apiBaseEl.value = LS.get('gyj_api_base') || 'https://selfloveart.top';
+    mediaBaseEl.value = LS.get('gyj_media_base') || 'https://media.selfloveart.top';
     tokenEl.value = LS.get('gyj_token') || '';
     [apiBaseEl, mediaBaseEl, tokenEl].forEach(el => el.addEventListener('change', saveConfig));
     function saveConfig() {
@@ -484,11 +484,13 @@
     const mgmtList = $('mgmtList'), mgmtStatus = $('mgmtStatus');
     let mgmtWorks = [];
 
+    // 后台缩略图统一走 Worker 同域代理（API 能通 → 图片就能显示），不依赖独立媒体域名
     function mediaUrl(key) {
         if (!key) return '';
         if (/^https?:\/\//i.test(key)) return key;
         const path = String(key).replace(/^\//, '').split('/').map(encodeURIComponent).join('/');
-        return MEDIA() + '/' + path;
+        const base = API() || location.origin;
+        return base + '/m/' + path;
     }
 
     $('btnLoadMgmt').addEventListener('click', loadMgmtWorks);
